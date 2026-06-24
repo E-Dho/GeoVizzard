@@ -1,0 +1,51 @@
+{
+  "source_run": "runs/2026-06-09_ho-precision-fusion-k20-ldpca256-epochs400-patience50",
+  "source_predictions": "runs/2026-06-09_ho-precision-fusion-k20-ldpca256-epochs400-patience50/test_predictions.tsv",
+  "source_anno": "data/annotations/v62.0_HO_public_europe_groupid_cov5to90_nonsingleton.anno",
+  "output_named_csv": "app/public/data/2026-06-09_ho-precision-fusion-k20-ldpca256-epochs400-patience50.csv",
+  "output_default_csv": "app/public/data/default.csv",
+  "n_rows": 1154,
+  "schema": [
+    "sample_id",
+    "true_lat",
+    "true_lon",
+    "pred_lat",
+    "pred_lon",
+    "age_bp",
+    "error_km",
+    "sigma_final",
+    "alpha_precision",
+    "group",
+    "sequencing_type",
+    "locality_id",
+    "age_bin",
+    "split",
+    "nll",
+    "sigma_knn_corrected",
+    "raw_sigma_knn",
+    "sigma_mlp",
+    "political_entity",
+    "pulldown_strategy",
+    "data_type",
+    "publication"
+  ],
+  "geovizzard_required_columns": [
+    "sample_id",
+    "true_lat",
+    "true_lon",
+    "pred_lat",
+    "pred_lon",
+    "age_bp"
+  ],
+  "geovizzard_optional_columns_included": [
+    "error_km",
+    "sigma_final",
+    "alpha_precision",
+    "group",
+    "sequencing_type",
+    "locality_id",
+    "sigma_knn_corrected",
+    "sigma_mlp"
+  ],
+  "note": "default.csv was overwritten to load this run automatically in GeoVizzard. Expert mu_knn/mu_mlp lat/lon were omitted because local pyproj is unavailable; final predictions are included."
+}
