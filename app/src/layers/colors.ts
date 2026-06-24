@@ -5,7 +5,7 @@ export const TRUE_COLOR: [number, number, number] = [41, 121, 255];
 export const PRED_COLOR: [number, number, number] = [232, 92, 63];
 export const SELECTED_COLOR: [number, number, number] = [255, 214, 10];
 
-const palette: [number, number, number][] = [
+export const palette: [number, number, number][] = [
   [41, 121, 255],
   [232, 92, 63],
   [45, 166, 92],
@@ -23,6 +23,10 @@ function hashString(value = "") {
     hash |= 0;
   }
   return Math.abs(hash);
+}
+
+export function categoryColor(value?: string) {
+  return palette[hashString(value) % palette.length];
 }
 
 function ramp(value: number | undefined, min: number, max: number): [number, number, number] {
@@ -54,9 +58,9 @@ export function colorForSample(
     const [min, max] = extent(samples, (s) => s.age_bp);
     rgb = ramp(sample.age_bp, min, max);
   } else if (mode === "group") {
-    rgb = palette[hashString(sample.group) % palette.length];
+    rgb = categoryColor(sample.group);
   } else if (mode === "sequencing_type") {
-    rgb = palette[hashString(sample.sequencing_type) % palette.length];
+    rgb = categoryColor(sample.sequencing_type);
   }
   return [...rgb, Math.round(255 * sample.temporalAlpha * opacity)] as [number, number, number, number];
 }

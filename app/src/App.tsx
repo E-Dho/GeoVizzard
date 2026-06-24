@@ -49,6 +49,7 @@ export default function App() {
       </div>
       <SampleInspector
         sample={state.selectedSample}
+        selectedOnly={state.filters.selectedOnly}
         clearSelection={() => state.setSelectedSampleId(undefined)}
         setViewState={state.setViewState}
         setSelectedOnly={(enabled) =>

@@ -53,10 +53,16 @@ export function ControlPanel(state: Props) {
         filters={state.filters}
         setFilters={state.setFilters}
         metadata={state.metadata}
-        samples={state.filteredSamples}
+        filteredSamples={state.filteredSamples}
+        allSamples={state.samples}
       />
       <LayerControls settings={state.layerSettings} setSettings={state.setLayerSettings} hasSigma={hasSigma} />
-      <Legend samples={state.filteredSamples} metadata={state.metadata} settings={state.layerSettings} />
+      <Legend
+        samples={state.filteredSamples}
+        allSamples={state.samples}
+        metadata={state.metadata}
+        settings={state.layerSettings}
+      />
     </aside>
   );
 }

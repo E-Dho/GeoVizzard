@@ -4,6 +4,7 @@ import type { MapViewState } from "../state/useAppState";
 
 type Props = {
   sample?: SampleRecord;
+  selectedOnly: boolean;
   clearSelection: () => void;
   setViewState: React.Dispatch<React.SetStateAction<MapViewState>> | ((viewState: MapViewState) => void);
   setSelectedOnly: (enabled: boolean) => void;
@@ -19,7 +20,13 @@ function Field({ label, value }: { label: string; value: unknown }) {
   );
 }
 
-export function SampleInspector({ sample, clearSelection, setViewState, setSelectedOnly }: Props) {
+export function SampleInspector({
+  sample,
+  selectedOnly,
+  clearSelection,
+  setViewState,
+  setSelectedOnly
+}: Props) {
   if (!sample) {
     return (
       <aside className="inspector empty">
@@ -53,9 +60,13 @@ export function SampleInspector({ sample, clearSelection, setViewState, setSelec
         <Field label="Sigma MLP" value={sample.sigma_mlp} />
       </div>
       <div className="button-row">
-        <button onClick={() => setSelectedOnly(true)}>
+        <button
+          className={selectedOnly ? "active-action" : ""}
+          onClick={() => setSelectedOnly(!selectedOnly)}
+          title={selectedOnly ? "Show all filtered samples again" : "Show only this selected sample"}
+        >
           <Crosshair size={15} />
-          Only
+          {selectedOnly ? "Show all" : "Only"}
         </button>
         <button
           onClick={() =>

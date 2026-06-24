@@ -41,6 +41,11 @@ button:hover,
   background: #334155;
 }
 
+button.active-action {
+  background: #0f766e;
+  border-color: #0f766e;
+}
+
 input,
 select,
 textarea {
@@ -219,6 +224,26 @@ label {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.numeric-filter {
+  display: grid;
+  gap: 6px;
+}
+
+.filter-label {
+  align-items: center;
+  color: #475569;
+  display: flex;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.info-dot {
+  align-items: center;
+  color: #64748b;
+  cursor: help;
+  display: inline-flex;
+}
+
 .check {
   align-items: center;
   display: flex;
@@ -301,7 +326,13 @@ th {
   gap: 8px;
 }
 
+.legend-group {
+  display: grid;
+  gap: 7px;
+}
+
 .swatch {
+  flex: 0 0 auto;
   border-radius: 999px;
   display: inline-block;
   height: 10px;
@@ -322,6 +353,24 @@ th {
   height: 12px;
 }
 
+.colorbar {
+  background: linear-gradient(90deg, rgb(39, 174, 96), rgb(247, 153, 72), rgb(255, 50, 42));
+  border-radius: 5px;
+  height: 12px;
+}
+
+.legend-scale {
+  color: #475569;
+  display: grid;
+  font-size: 12px;
+  gap: 5px;
+}
+
+.scale-labels {
+  display: flex;
+  justify-content: space-between;
+}
+
 .chips {
   display: flex;
   flex-wrap: wrap;
@@ -329,10 +378,13 @@ th {
 }
 
 .chips span {
+  align-items: center;
   background: #e2e8f0;
   border-radius: 999px;
   color: #334155;
+  display: inline-flex;
   font-size: 11px;
+  gap: 5px;
   padding: 3px 7px;
 }
 

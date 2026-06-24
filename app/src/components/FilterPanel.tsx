@@ -1,3 +1,4 @@
+import { Info } from "lucide-react";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
 import type { Filters } from "../data/filters";
 
@@ -5,11 +6,14 @@ type Props = {
   filters: Filters;
   setFilters: React.Dispatch<React.SetStateAction<Filters>>;
   metadata: DatasetMetadata;
-  samples: SampleRecord[];
+  filteredSamples: SampleRecord[];
+  allSamples: SampleRecord[];
 };
 
 function numericValue(value: string) {
-  return value === "" ? undefined : Number(value);
+  if (value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
 }
 
 function MultiSelect({
@@ -44,10 +48,75 @@ function MultiSelect({
   );
 }
 
-export function FilterPanel({ filters, setFilters, metadata, samples }: Props) {
-  const hasSigma = samples.some((sample) => sample.sigma_final !== undefined);
-  const hasError = samples.some((sample) => sample.error_km !== undefined);
-  const hasAlpha = samples.some((sample) => sample.alpha_precision !== undefined);
+function numericExtent(samples: SampleRecord[], accessor: (sample: SampleRecord) => number | undefined) {
+  const values = samples.map(accessor).filter((value): value is number => value !== undefined);
+  if (!values.length) return undefined;
+  return { min: Math.min(...values), max: Math.max(...values) };
+}
+
+function formatRange(range: { min: number; max: number } | undefined, suffix = "") {
+  if (!range) return "No values available in this dataset.";
+  const min = Number(range.min.toFixed(3));
+  const max = Number(range.max.toFixed(3));
+  return `Available range: ${min}-${max}${suffix}`;
+}
+
+function NumericFilter({
+  label,
+  range,
+  suffix,
+  min,
+  max,
+  onMin,
+  onMax
+}: {
+  label: string;
+  range: { min: number; max: number } | undefined;
+  suffix?: string;
+  min?: number;
+  max?: number;
+  onMin: (value: number | undefined) => void;
+  onMax: (value: number | undefined) => void;
+}) {
+  const hint = formatRange(range, suffix);
+  return (
+    <div className="numeric-filter">
+      <div className="filter-label">
+        <span>{label}</span>
+        <span className="info-dot" title={hint} aria-label={hint}>
+          <Info size={13} />
+        </span>
+      </div>
+      <div className="two-col">
+        <label>
+          Min
+          <input
+            type="number"
+            value={min ?? ""}
+            placeholder={range ? String(Number(range.min.toFixed(3))) : ""}
+            title={hint}
+            onChange={(event) => onMin(numericValue(event.target.value))}
+          />
+        </label>
+        <label>
+          Max
+          <input
+            type="number"
+            value={max ?? ""}
+            placeholder={range ? String(Number(range.max.toFixed(3))) : ""}
+            title={hint}
+            onChange={(event) => onMax(numericValue(event.target.value))}
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+export function FilterPanel({ filters, setFilters, metadata, filteredSamples, allSamples }: Props) {
+  const sigmaRange = numericExtent(allSamples, (sample) => sample.sigma_final);
+  const errorRange = numericExtent(allSamples, (sample) => sample.error_km);
+  const alphaRange = numericExtent(allSamples, (sample) => sample.alpha_precision);
   const patch = (partial: Partial<Filters>) => setFilters((current) => ({ ...current, ...partial }));
   const patchBbox = (partial: Partial<Filters["bbox"]>) =>
     setFilters((current) => ({ ...current, bbox: { ...current.bbox, ...partial } }));
@@ -56,7 +125,7 @@ export function FilterPanel({ filters, setFilters, metadata, samples }: Props) {
     <section className="panel-section">
       <h2>Filters</h2>
       <div className="metric-row">
-        <span>Filtered: {samples.length}</span>
+        <span>Filtered: {filteredSamples.length}</span>
         <span>Total: {metadata.rowCount}</span>
       </div>
       <label>
@@ -80,41 +149,37 @@ export function FilterPanel({ filters, setFilters, metadata, samples }: Props) {
         selected={filters.sequencingTypes}
         onChange={(sequencingTypes) => patch({ sequencingTypes })}
       />
-      {hasSigma && (
-        <div className="two-col">
-          <label>
-            Sigma min
-            <input type="number" value={filters.sigmaFinal.min ?? ""} onChange={(e) => patch({ sigmaFinal: { ...filters.sigmaFinal, min: numericValue(e.target.value) } })} />
-          </label>
-          <label>
-            Sigma max
-            <input type="number" value={filters.sigmaFinal.max ?? ""} onChange={(e) => patch({ sigmaFinal: { ...filters.sigmaFinal, max: numericValue(e.target.value) } })} />
-          </label>
-        </div>
+      {sigmaRange && (
+        <NumericFilter
+          label="Sigma final"
+          range={sigmaRange}
+          suffix=" km"
+          min={filters.sigmaFinal.min}
+          max={filters.sigmaFinal.max}
+          onMin={(min) => patch({ sigmaFinal: { ...filters.sigmaFinal, min } })}
+          onMax={(max) => patch({ sigmaFinal: { ...filters.sigmaFinal, max } })}
+        />
       )}
-      {hasError && (
-        <div className="two-col">
-          <label>
-            Error min
-            <input type="number" value={filters.errorKm.min ?? ""} onChange={(e) => patch({ errorKm: { ...filters.errorKm, min: numericValue(e.target.value) } })} />
-          </label>
-          <label>
-            Error max
-            <input type="number" value={filters.errorKm.max ?? ""} onChange={(e) => patch({ errorKm: { ...filters.errorKm, max: numericValue(e.target.value) } })} />
-          </label>
-        </div>
+      {errorRange && (
+        <NumericFilter
+          label="Error"
+          range={errorRange}
+          suffix=" km"
+          min={filters.errorKm.min}
+          max={filters.errorKm.max}
+          onMin={(min) => patch({ errorKm: { ...filters.errorKm, min } })}
+          onMax={(max) => patch({ errorKm: { ...filters.errorKm, max } })}
+        />
       )}
-      {hasAlpha && (
-        <div className="two-col">
-          <label>
-            Alpha min
-            <input type="number" value={filters.alphaPrecision.min ?? ""} onChange={(e) => patch({ alphaPrecision: { ...filters.alphaPrecision, min: numericValue(e.target.value) } })} />
-          </label>
-          <label>
-            Alpha max
-            <input type="number" value={filters.alphaPrecision.max ?? ""} onChange={(e) => patch({ alphaPrecision: { ...filters.alphaPrecision, max: numericValue(e.target.value) } })} />
-          </label>
-        </div>
+      {alphaRange && (
+        <NumericFilter
+          label="Alpha precision"
+          range={alphaRange}
+          min={filters.alphaPrecision.min}
+          max={filters.alphaPrecision.max}
+          onMin={(min) => patch({ alphaPrecision: { ...filters.alphaPrecision, min } })}
+          onMax={(max) => patch({ alphaPrecision: { ...filters.alphaPrecision, max } })}
+        />
       )}
       <label className="check">
         <input
