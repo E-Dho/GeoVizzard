@@ -1,5 +1,9 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Play, SkipBack, SkipForward, Square } from "lucide-react";
 import type { DatasetMetadata } from "../data/schema";
 import type { TimeSettings } from "../data/time";
+
+type PlaybackDirection = "younger" | "older";
 
 type Props = {
   metadata: DatasetMetadata;
@@ -18,7 +22,57 @@ export function TimeControls({
   window,
   primaryWindowCount
 }: Props) {
+  const [showPlayback, setShowPlayback] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [playbackDirection, setPlaybackDirection] = useState<PlaybackDirection>("older");
+  const [playbackIntervalMs, setPlaybackIntervalMs] = useState(900);
   const [minAge, maxAge] = metadata.ageExtent;
+  const availableAges = useMemo(
+    () => [...metadata.availableAges].sort((a, b) => a - b),
+    [metadata.availableAges]
+  );
+
+  const getNextAge = useCallback(
+    (direction: PlaybackDirection) => {
+      if (!availableAges.length) return undefined;
+      const center = timeSettings.centerAgeBp;
+      if (direction === "older") {
+        return availableAges.find((age) => age > center);
+      }
+      for (let index = availableAges.length - 1; index >= 0; index -= 1) {
+        if (availableAges[index] < center) return availableAges[index];
+      }
+      return undefined;
+    },
+    [availableAges, timeSettings.centerAgeBp]
+  );
+
+  const stepTime = useCallback(
+    (direction: PlaybackDirection) => {
+      const nextAge = getNextAge(direction);
+      if (nextAge === undefined) return false;
+      setCenterAge(nextAge);
+      return true;
+    },
+    [getNextAge, setCenterAge]
+  );
+
+  useEffect(() => {
+    if (!showPlayback) setPlaying(false);
+  }, [showPlayback]);
+
+  useEffect(() => {
+    if (!playing) return undefined;
+    const interval = globalThis.setInterval(() => {
+      const moved = stepTime(playbackDirection);
+      if (!moved) setPlaying(false);
+    }, Math.max(150, playbackIntervalMs));
+    return () => globalThis.clearInterval(interval);
+  }, [playbackDirection, playbackIntervalMs, playing, stepTime]);
+
+  const canStepYounger = getNextAge("younger") !== undefined;
+  const canStepOlder = getNextAge("older") !== undefined;
+
   return (
     <section className="panel-section">
       <h2>Time</h2>
@@ -58,6 +112,78 @@ export function TimeControls({
         />
         Snap to available dates
       </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={showPlayback}
+          onChange={(event) => setShowPlayback(event.target.checked)}
+        />
+        Show playback controls
+      </label>
+      {showPlayback && (
+        <div className="playback-controls">
+          <div className="playback-row">
+            <button
+              type="button"
+              onClick={() => stepTime("younger")}
+              disabled={!canStepYounger}
+              title="Step to the next younger available sample age"
+            >
+              <SkipBack size={15} />
+              Younger
+            </button>
+            <button
+              type="button"
+              className={playing ? "active-action" : ""}
+              onClick={() => setPlaying((current) => !current)}
+              disabled={
+                playbackDirection === "older" ? !canStepOlder : !canStepYounger
+              }
+              title={playing ? "Stop playback" : "Play through available sample ages"}
+            >
+              {playing ? <Square size={15} /> : <Play size={15} />}
+              {playing ? "Stop" : "Play"}
+            </button>
+            <button
+              type="button"
+              onClick={() => stepTime("older")}
+              disabled={!canStepOlder}
+              title="Step to the next older available sample age"
+            >
+              <SkipForward size={15} />
+              Older
+            </button>
+          </div>
+          <div className="two-col">
+            <label>
+              Play direction
+              <select
+                value={playbackDirection}
+                onChange={(event) =>
+                  setPlaybackDirection(event.target.value as PlaybackDirection)
+                }
+              >
+                <option value="older">Older</option>
+                <option value="younger">Younger</option>
+              </select>
+            </label>
+            <label>
+              Step delay ms
+              <input
+                type="number"
+                min={150}
+                step={50}
+                value={playbackIntervalMs}
+                onChange={(event) =>
+                  setPlaybackIntervalMs(
+                    Math.max(150, Number(event.target.value) || 900)
+                  )
+                }
+              />
+            </label>
+          </div>
+        </div>
+      )}
       <div className="two-col">
         <label className="check">
           <input
