@@ -69,6 +69,14 @@ function stringValue(row: RawRow, column?: string) {
   return value ? value : undefined;
 }
 
+function booleanValue(row: RawRow, column?: string) {
+  const raw = stringValue(row, column)?.toLowerCase();
+  if (!raw) return undefined;
+  if (["1", "true", "yes", "y", "outlier", "potential outlier"].includes(raw)) return true;
+  if (["0", "false", "no", "n"].includes(raw)) return false;
+  return undefined;
+}
+
 function parseArray(raw?: string) {
   if (!raw) return [];
   try {
@@ -153,6 +161,7 @@ function normalizeRows(rows: RawRow[], mapping: SchemaMapping): SampleRecord[] {
         mu_mlp_lat: numberValue(row, mapping.mu_mlp_lat),
         mu_mlp_lon: numberValue(row, mapping.mu_mlp_lon),
         sigma_mlp: numberValue(row, mapping.sigma_mlp),
+        potential_outlier: booleanValue(row, mapping.potential_outlier),
         neighbors: parseNeighbors(row, mapping)
       };
       Object.entries(optionalValues).forEach(([key, value]) => {

@@ -4,6 +4,7 @@ type Props = {
   settings: LayerSettings;
   setSettings: React.Dispatch<React.SetStateAction<LayerSettings>>;
   hasSigma: boolean;
+  hasPotentialOutliers: boolean;
 };
 
 function Toggle({
@@ -23,7 +24,7 @@ function Toggle({
   );
 }
 
-export function LayerControls({ settings, setSettings, hasSigma }: Props) {
+export function LayerControls({ settings, setSettings, hasSigma, hasPotentialOutliers }: Props) {
   const patch = (partial: Partial<LayerSettings>) =>
     setSettings((current) => ({ ...current, ...partial }));
 
@@ -35,10 +36,16 @@ export function LayerControls({ settings, setSettings, hasSigma }: Props) {
         <Toggle label="Predicted" checked={settings.predictedLocations} onChange={(v) => patch({ predictedLocations: v })} />
         <Toggle label="Arrows" checked={settings.arrows} onChange={(v) => patch({ arrows: v })} />
         <Toggle label="Heatmap" checked={settings.heatmap} onChange={(v) => patch({ heatmap: v })} />
+        <Toggle
+          label="Potential outliers"
+          checked={settings.potentialOutliers}
+          onChange={(v) => patch({ potentialOutliers: v })}
+        />
         <Toggle label="Uncertainty" checked={settings.uncertainty && hasSigma} onChange={(v) => patch({ uncertainty: v })} />
         <Toggle label="Selected only density" checked={settings.selectedDensityOnly} onChange={(v) => patch({ selectedDensityOnly: v })} />
       </div>
       {!hasSigma && <p className="muted">Uncertainty controls appear when sigma_final exists.</p>}
+      {!hasPotentialOutliers && <p className="muted">Potential outlier highlights appear when potential_outlier exists.</p>}
       <div className="two-col">
         <label>
           Point opacity

@@ -12,6 +12,7 @@ The frontend uses React, TypeScript, MapLibre GL, and deck.gl. It provides map l
 - Filter by time, group, sequencing type, uncertainty, prediction error, alpha precision, coordinates, and free-text search
 - Fade older samples with configurable temporal alpha settings
 - Toggle and style true locations, predicted locations, arrows, uncertainty circles, and heatmaps
+- Highlight samples tagged as potential outliers
 - Inspect selected samples and neighbour metadata when available
 - Export filtered samples and app settings
 - Build as a static website with no backend requirement
@@ -98,6 +99,7 @@ neighbor_ids
 neighbor_lats
 neighbor_lons
 neighbor_distances
+potential_outlier
 ```
 
 Neighbour columns may be JSON arrays, for example:
@@ -125,7 +127,8 @@ Example:
   "group": "group",
   "sequencing_type": "sequencing_type",
   "sigma_final": "sigma_final",
-  "alpha_precision": "alpha_precision"
+  "alpha_precision": "alpha_precision",
+  "potential_outlier": "potential_outlier"
 }
 ```
 
@@ -141,6 +144,7 @@ After loading a dataset, GeoVizzard infers:
 - available sequencing types
 - coordinate extents
 - available optional uncertainty, error, and alpha fields
+- `potential_outlier` flags when available
 
 The time slider is clamped to the loaded data range. The visible time window is clipped to available ages, and temporal fading can keep older samples visible with configurable alpha decay.
 
@@ -154,6 +158,7 @@ GeoVizzard includes:
 - uncertainty circles based on `sigma_final`
 - heatmap/KDE surface based on the current filtered sample set
 - selected-sample highlighting
+- potential outlier highlighting based on the `potential_outlier` field
 - optional neighbour points and neighbour links
 
 All scientific layers are rendered with deck.gl and can be toggled from the control panel.

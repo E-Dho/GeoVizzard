@@ -12,6 +12,7 @@ import { arrowLayer } from "../layers/arrowLayer";
 import { uncertaintyLayer } from "../layers/uncertaintyLayer";
 import { heatmapLayer } from "../layers/heatmapLayer";
 import { selectedSampleLayer } from "../layers/selectedSampleLayer";
+import { outlierHighlightLayer } from "../layers/outlierHighlightLayer";
 
 const positronNoLabels: StyleSpecification = {
   version: 8,
@@ -96,6 +97,7 @@ export function MapView({
       arrowLayer(displaySamples, layerSettings, onSelectSample),
       trueLocationLayer(displaySamples, layerSettings, onSelectSample),
       predictedLocationLayer(displaySamples, layerSettings, onSelectSample),
+      outlierHighlightLayer(displaySamples, layerSettings, onSelectSample),
       ...selectedSampleLayer(selectedSample, layerSettings)
     ],
     [displaySamples, heatmapSamples, layerSettings, onSelectSample, selectedSample]

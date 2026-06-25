@@ -28,6 +28,7 @@ export type LayerSettings = {
   arrows: boolean;
   uncertainty: boolean;
   heatmap: boolean;
+  potentialOutliers: boolean;
   selectedSample: boolean;
   neighbours: boolean;
   selectedDensityOnly: boolean;
@@ -62,6 +63,7 @@ export const defaultLayerSettings: LayerSettings = {
   arrows: true,
   uncertainty: false,
   heatmap: true,
+  potentialOutliers: true,
   selectedSample: true,
   neighbours: true,
   selectedDensityOnly: false,
@@ -214,7 +216,9 @@ export function useAppState() {
     const parsed = JSON.parse(text);
     if (parsed.filters) setFilters(parsed.filters);
     if (parsed.timeSettings) setTimeSettings(parsed.timeSettings);
-    if (parsed.layerSettings) setLayerSettings(parsed.layerSettings);
+    if (parsed.layerSettings) {
+      setLayerSettings({ ...defaultLayerSettings, ...parsed.layerSettings });
+    }
     if (parsed.viewState) setViewState(parsed.viewState);
     if (parsed.schemaMapping) {
       setSchemaMapping(parsed.schemaMapping);

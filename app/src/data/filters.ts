@@ -105,6 +105,7 @@ export function exportSamplesCsv(samples: SampleRecord[]) {
     "error_km",
     "sigma_final",
     "alpha_precision",
+    "potential_outlier",
     "group",
     "sequencing_type",
     "locality_id"

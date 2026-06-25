@@ -9,6 +9,7 @@ type Props = ReturnType<typeof useAppState>;
 
 export function ControlPanel(state: Props) {
   const hasSigma = state.samples.some((sample) => sample.sigma_final !== undefined);
+  const hasPotentialOutliers = state.samples.some((sample) => sample.potential_outlier);
   return (
     <aside className="control-panel">
       <section className="panel-section brand">
@@ -56,7 +57,12 @@ export function ControlPanel(state: Props) {
         filteredSamples={state.filteredSamples}
         allSamples={state.samples}
       />
-      <LayerControls settings={state.layerSettings} setSettings={state.setLayerSettings} hasSigma={hasSigma} />
+      <LayerControls
+        settings={state.layerSettings}
+        setSettings={state.setLayerSettings}
+        hasSigma={hasSigma}
+        hasPotentialOutliers={hasPotentialOutliers}
+      />
       <Legend
         samples={state.filteredSamples}
         allSamples={state.samples}

@@ -20,7 +20,8 @@ export type ColumnKey =
   | "neighbor_ids"
   | "neighbor_lats"
   | "neighbor_lons"
-  | "neighbor_distances";
+  | "neighbor_distances"
+  | "potential_outlier";
 
 export type SchemaMapping = Partial<Record<ColumnKey, string>>;
 
@@ -50,6 +51,7 @@ export type SampleRecord = {
   mu_mlp_lat?: number;
   mu_mlp_lon?: number;
   sigma_mlp?: number;
+  potential_outlier?: boolean;
   neighbors?: NeighborInfo[];
   temporalAlpha: number;
   inPrimaryWindow: boolean;
@@ -101,7 +103,8 @@ export const defaultSchemaMapping: SchemaMapping = {
   neighbor_ids: "neighbor_ids",
   neighbor_lats: "neighbor_lats",
   neighbor_lons: "neighbor_lons",
-  neighbor_distances: "neighbor_distances"
+  neighbor_distances: "neighbor_distances",
+  potential_outlier: "potential_outlier"
 };
 
 export const blankMetadata: DatasetMetadata = {

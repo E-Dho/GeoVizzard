@@ -54,6 +54,7 @@ export function SampleInspector({
         <Field label="Error km" value={sample.error_km} />
         <Field label="Sigma final" value={sample.sigma_final} />
         <Field label="Alpha precision" value={sample.alpha_precision} />
+        <Field label="Potential outlier" value={sample.potential_outlier ? "Yes" : undefined} />
         <Field label="kNN lat/lon" value={sample.mu_knn_lat !== undefined && sample.mu_knn_lon !== undefined ? `${sample.mu_knn_lat.toFixed(4)}, ${sample.mu_knn_lon.toFixed(4)}` : undefined} />
         <Field label="MLP lat/lon" value={sample.mu_mlp_lat !== undefined && sample.mu_mlp_lon !== undefined ? `${sample.mu_mlp_lat.toFixed(4)}, ${sample.mu_mlp_lon.toFixed(4)}` : undefined} />
         <Field label="Sigma kNN" value={sample.sigma_knn_corrected} />
