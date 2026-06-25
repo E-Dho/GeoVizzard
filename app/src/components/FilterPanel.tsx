@@ -17,7 +17,7 @@ function numericValue(value: string) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function MultiSelect({
+function CheckboxFilter({
   label,
   values,
   selected,
@@ -29,23 +29,38 @@ function MultiSelect({
   onChange: (values: string[]) => void;
 }) {
   if (!values.length) return null;
+  const selectedSet = new Set(selected);
+  const toggleValue = (value: string, checked: boolean) => {
+    if (checked) {
+      onChange([...selected, value]);
+      return;
+    }
+    onChange(selected.filter((selectedValue) => selectedValue !== value));
+  };
+
   return (
-    <label>
-      {label}
-      <select
-        multiple
-        value={selected}
-        onChange={(event) =>
-          onChange(Array.from(event.currentTarget.selectedOptions).map((option) => option.value))
-        }
-      >
+    <fieldset className="checkbox-filter">
+      <legend>
+        <span>{label}</span>
+        {selected.length > 0 && (
+          <button type="button" onClick={() => onChange([])}>
+            Clear {selected.length}
+          </button>
+        )}
+      </legend>
+      <div className="checkbox-list">
         {values.map((value) => (
-          <option key={value} value={value}>
+          <label key={value} className="check">
+            <input
+              type="checkbox"
+              checked={selectedSet.has(value)}
+              onChange={(event) => toggleValue(value, event.target.checked)}
+            />
             {value}
-          </option>
+          </label>
         ))}
-      </select>
-    </label>
+      </div>
+    </fieldset>
   );
 }
 
@@ -147,13 +162,13 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
           onChange={(event) => patch({ search: event.target.value })}
         />
       </label>
-      <MultiSelect
+      <CheckboxFilter
         label="Group"
         values={metadata.groups}
         selected={filters.groups}
         onChange={(groups) => patch({ groups })}
       />
-      <MultiSelect
+      <CheckboxFilter
         label="Sequencing"
         values={metadata.sequencingTypes}
         selected={filters.sequencingTypes}
