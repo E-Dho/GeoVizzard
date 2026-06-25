@@ -40,22 +40,30 @@ export function extent(samples: SampleRecord[], accessor: (sample: SampleRecord)
   return values.length ? [Math.min(...values), Math.max(...values)] : [0, 1];
 }
 
+export function extentForColorMode(mode: ColorMode, samples: SampleRecord[]) {
+  if (mode === "error_km") return extent(samples, (sample) => sample.error_km);
+  if (mode === "alpha_precision") return extent(samples, (sample) => sample.alpha_precision);
+  if (mode === "age_bp") return extent(samples, (sample) => sample.age_bp);
+  return undefined;
+}
+
 export function colorForSample(
   sample: SampleRecord,
   mode: ColorMode,
   samples: SampleRecord[],
   fallback: [number, number, number],
-  opacity = 1
+  opacity = 1,
+  colorExtent = extentForColorMode(mode, samples)
 ) {
   let rgb = fallback;
   if (mode === "error_km") {
-    const [min, max] = extent(samples, (s) => s.error_km);
+    const [min, max] = colorExtent ?? [0, 1];
     rgb = ramp(sample.error_km, min, max);
   } else if (mode === "alpha_precision") {
-    const [min, max] = extent(samples, (s) => s.alpha_precision);
+    const [min, max] = colorExtent ?? [0, 1];
     rgb = ramp(sample.alpha_precision, min, max);
   } else if (mode === "age_bp") {
-    const [min, max] = extent(samples, (s) => s.age_bp);
+    const [min, max] = colorExtent ?? [0, 1];
     rgb = ramp(sample.age_bp, min, max);
   } else if (mode === "group") {
     rgb = categoryColor(sample.group);

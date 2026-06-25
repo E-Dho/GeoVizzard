@@ -38,7 +38,7 @@ export default function App() {
         <MapView
           samples={state.filteredSamples}
           selectedSample={state.selectedSample}
-          layerSettings={state.layerSettings}
+          layerSettings={state.deferredLayerSettings}
           viewState={state.viewState}
           setViewState={state.setViewState}
           onSelectSample={selectSample}

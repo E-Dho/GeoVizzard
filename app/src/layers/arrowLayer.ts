@@ -2,7 +2,7 @@ import { LineLayer } from "@deck.gl/layers";
 import type { PickingInfo } from "@deck.gl/core";
 import type { SampleRecord } from "../data/schema";
 import type { LayerSettings } from "../state/useAppState";
-import { colorForSample } from "./colors";
+import { colorForSample, extentForColorMode } from "./colors";
 
 function sampled(samples: SampleRecord[], limit: number) {
   if (samples.length <= limit) return samples;
@@ -16,6 +16,7 @@ export function arrowLayer(
   onClick: (sample: SampleRecord) => void
 ) {
   const data = sampled(samples, settings.maxArrows);
+  const colorExtent = extentForColorMode(settings.arrowColorMode, samples);
   return new LineLayer<SampleRecord>({
     id: "prediction-arrows",
     data,
@@ -24,7 +25,7 @@ export function arrowLayer(
     getSourcePosition: (sample) => [sample.true_lon, sample.true_lat],
     getTargetPosition: (sample) => [sample.pred_lon, sample.pred_lat],
     getColor: (sample) =>
-      colorForSample(sample, settings.arrowColorMode, samples, [71, 85, 105], settings.arrowOpacity),
+      colorForSample(sample, settings.arrowColorMode, samples, [71, 85, 105], settings.arrowOpacity, colorExtent),
     getWidth: (sample) =>
       settings.arrowWidthMode === "error_km" ? Math.max(1, Math.min(7, (sample.error_km ?? 0) / 150)) : 1.5,
     widthUnits: "pixels",

@@ -2,13 +2,14 @@ import { ScatterplotLayer } from "@deck.gl/layers";
 import type { PickingInfo } from "@deck.gl/core";
 import type { SampleRecord } from "../data/schema";
 import type { LayerSettings } from "../state/useAppState";
-import { colorForSample, TRUE_COLOR } from "./colors";
+import { colorForSample, extentForColorMode, TRUE_COLOR } from "./colors";
 
 export function trueLocationLayer(
   samples: SampleRecord[],
   settings: LayerSettings,
   onClick: (sample: SampleRecord) => void
 ) {
+  const colorExtent = extentForColorMode(settings.pointColorMode, samples);
   return new ScatterplotLayer<SampleRecord>({
     id: "true-locations",
     data: samples,
@@ -21,7 +22,7 @@ export function trueLocationLayer(
     getLineWidth: 1,
     getPosition: (sample) => [sample.true_lon, sample.true_lat],
     getFillColor: (sample) =>
-      colorForSample(sample, settings.pointColorMode, samples, TRUE_COLOR, settings.trueOpacity),
+      colorForSample(sample, settings.pointColorMode, samples, TRUE_COLOR, settings.trueOpacity, colorExtent),
     getLineColor: [255, 255, 255, 160],
     onClick: (info: PickingInfo<SampleRecord>) => info.object && onClick(info.object),
     updateTriggers: {

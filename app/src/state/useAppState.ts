@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { applyFilters, defaultFilters, exportSamplesCsv, type Filters } from "../data/filters";
 import {
   defaultSchemaMapping,
@@ -112,6 +112,9 @@ export function useAppState() {
   const [viewState, setViewState] = useState<MapViewState>(defaultViewState);
   const [selectedSampleId, setSelectedSampleId] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
+  const deferredTimeSettings = useDeferredValue(timeSettings);
+  const deferredFilters = useDeferredValue(filters);
+  const deferredLayerSettings = useDeferredValue(layerSettings);
 
   const ingest = useCallback((dataset: LoadedDataset) => {
     setSamples(dataset.samples);
@@ -166,18 +169,18 @@ export function useAppState() {
   );
 
   const temporalSamples = useMemo(
-    () => applyTemporalAlpha(samples, timeSettings, metadata.ageExtent),
-    [samples, timeSettings, metadata.ageExtent]
+    () => applyTemporalAlpha(samples, deferredTimeSettings, metadata.ageExtent),
+    [samples, deferredTimeSettings, metadata.ageExtent]
   );
 
   const filteredSamples = useMemo(
-    () => applyFilters(temporalSamples, filters, selectedSampleId),
-    [temporalSamples, filters, selectedSampleId]
+    () => applyFilters(temporalSamples, deferredFilters, selectedSampleId),
+    [temporalSamples, deferredFilters, selectedSampleId]
   );
 
   const primaryWindowCount = filteredSamples.filter((sample) => sample.inPrimaryWindow).length;
   const selectedSample = samples.find((sample) => sample.sample_id === selectedSampleId);
-  const window = visibleWindow(timeSettings, metadata.ageExtent);
+  const window = visibleWindow(deferredTimeSettings, metadata.ageExtent);
 
   const setCenterAge = useCallback(
     (age: number) => {
@@ -231,6 +234,7 @@ export function useAppState() {
     filters,
     setFilters,
     layerSettings,
+    deferredLayerSettings,
     setLayerSettings,
     viewState,
     setViewState,

@@ -12,6 +12,14 @@ export function uncertaintyLayer(
   settings: LayerSettings,
   onClick: (sample: SampleRecord) => void
 ) {
+  if (!settings.uncertainty) {
+    return new PolygonLayer<CircleDatum>({
+      id: "uncertainty-circles",
+      data: [],
+      visible: false
+    });
+  }
+
   const data: CircleDatum[] = samples
     .filter((sample) => sample.sigma_final !== undefined)
     .slice(0, 20000)
@@ -28,7 +36,7 @@ export function uncertaintyLayer(
   return new PolygonLayer<CircleDatum>({
     id: "uncertainty-circles",
     data,
-    visible: settings.uncertainty,
+    visible: true,
     pickable: true,
     getPolygon: (sample) => sample.polygon,
     getFillColor: (sample) =>

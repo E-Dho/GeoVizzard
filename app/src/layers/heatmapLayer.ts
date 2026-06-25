@@ -4,6 +4,14 @@ import type { LayerSettings } from "../state/useAppState";
 import { heatmapWeight } from "../data/kde";
 
 export function heatmapLayer(samples: SampleRecord[], settings: LayerSettings) {
+  if (!settings.heatmap) {
+    return new HeatmapLayer<SampleRecord & { lon: number; lat: number }>({
+      id: "kde-heatmap",
+      data: [],
+      visible: false
+    });
+  }
+
   const data =
     settings.heatmapSource === "error_endpoints"
       ? samples.flatMap((sample) => [
@@ -19,7 +27,7 @@ export function heatmapLayer(samples: SampleRecord[], settings: LayerSettings) {
   return new HeatmapLayer<SampleRecord & { lon: number; lat: number }>({
     id: "kde-heatmap",
     data,
-    visible: settings.heatmap,
+    visible: true,
     getPosition: (sample) => [sample.lon, sample.lat],
     getWeight: (sample) => heatmapWeight(sample, settings.heatmapUseSigma),
     radiusPixels: settings.heatmapBandwidth,

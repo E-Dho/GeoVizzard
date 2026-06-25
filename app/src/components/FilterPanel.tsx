@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { useMemo } from "react";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
 import type { Filters } from "../data/filters";
 
@@ -114,9 +115,18 @@ function NumericFilter({
 }
 
 export function FilterPanel({ filters, setFilters, metadata, filteredSamples, allSamples }: Props) {
-  const sigmaRange = numericExtent(allSamples, (sample) => sample.sigma_final);
-  const errorRange = numericExtent(allSamples, (sample) => sample.error_km);
-  const alphaRange = numericExtent(allSamples, (sample) => sample.alpha_precision);
+  const sigmaRange = useMemo(
+    () => numericExtent(allSamples, (sample) => sample.sigma_final),
+    [allSamples]
+  );
+  const errorRange = useMemo(
+    () => numericExtent(allSamples, (sample) => sample.error_km),
+    [allSamples]
+  );
+  const alphaRange = useMemo(
+    () => numericExtent(allSamples, (sample) => sample.alpha_precision),
+    [allSamples]
+  );
   const patch = (partial: Partial<Filters>) => setFilters((current) => ({ ...current, ...partial }));
   const patchBbox = (partial: Partial<Filters["bbox"]>) =>
     setFilters((current) => ({ ...current, bbox: { ...current.bbox, ...partial } }));

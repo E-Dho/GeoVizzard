@@ -61,7 +61,7 @@ export function ControlPanel(state: Props) {
         samples={state.filteredSamples}
         allSamples={state.samples}
         metadata={state.metadata}
-        settings={state.layerSettings}
+        settings={state.deferredLayerSettings}
       />
     </aside>
   );
