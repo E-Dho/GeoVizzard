@@ -25,9 +25,10 @@ function exportMapPng() {
 
 export default function App() {
   const state = useAppState();
+  const { setSelectedSampleId } = state;
   const selectSample = useCallback(
-    (sample: { sample_id: string }) => state.setSelectedSampleId(sample.sample_id),
-    [state]
+    (sample: { sample_id: string }) => setSelectedSampleId(sample.sample_id),
+    [setSelectedSampleId]
   );
 
   return (

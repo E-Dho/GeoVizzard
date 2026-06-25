@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import DeckGL from "@deck.gl/react";
 import Map from "react-map-gl/maplibre";
 import maplibregl from "maplibre-gl";
@@ -53,9 +53,41 @@ export function MapView({
   onSelectSample
 }: Props) {
   const [blank, setBlank] = useState(false);
+  const [localViewState, setLocalViewState] = useState<MapViewState>(viewState);
+  const latestViewState = useRef<MapViewState>(viewState);
   const heatmapSamples =
     layerSettings.selectedDensityOnly && selectedSample ? [selectedSample] : samples;
   const displaySamples = layerSettings.selectedDensityOnly && selectedSample ? [selectedSample] : samples;
+
+  useEffect(() => {
+    latestViewState.current = viewState;
+    setLocalViewState(viewState);
+  }, [viewState]);
+
+  const handleViewStateChange = useCallback(({ viewState: next }: { viewState: unknown }) => {
+    const nextViewState = next as MapViewState;
+    latestViewState.current = nextViewState;
+    setLocalViewState(nextViewState);
+  }, []);
+
+  const handleInteractionStateChange = useCallback(
+    (interactionState: {
+      isDragging?: boolean;
+      isPanning?: boolean;
+      isRotating?: boolean;
+      isZooming?: boolean;
+    }) => {
+      const moving =
+        interactionState.isDragging ||
+        interactionState.isPanning ||
+        interactionState.isRotating ||
+        interactionState.isZooming;
+      if (!moving) {
+        setViewState(latestViewState.current);
+      }
+    },
+    [setViewState]
+  );
 
   const layers = useMemo(
     () => [
@@ -82,8 +114,9 @@ export function MapView({
       <DeckGL
         layers={layers}
         controller
-        viewState={viewState}
-        onViewStateChange={({ viewState: next }) => setViewState(next as MapViewState)}
+        viewState={localViewState}
+        onViewStateChange={handleViewStateChange}
+        onInteractionStateChange={handleInteractionStateChange}
         getTooltip={({ object }) =>
           object?.sample_id ? `${object.sample_id}\nAge: ${object.age_bp} BP` : null
         }
