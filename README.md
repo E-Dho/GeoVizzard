@@ -177,3 +177,6 @@ npm run build
 ```
 
 deploy the contents of `app/dist` to any static hosting provider.
+
+
+Make sure to enable graphics acceleration when available in your browser (for chrome: Settings -> system and perfromance -> use graphics acceleration when available -> on) since the applications is rather heavy on the performance side.
