@@ -21,10 +21,10 @@ export const defaultTimeSettings: TimeSettings = {
   snapToAvailableDates: true,
   temporalFadeEnabled: true,
   fadeOlderOnly: true,
-  fadeLookbackYears: 1000,
+  fadeLookbackYears: 100,
   minimumFadedAlpha: 0.1,
   currentWindowAlpha: 0.95,
-  fadeCurve: "linear",
+  fadeCurve: "exponential",
   fadeStrength: 4
 };
 

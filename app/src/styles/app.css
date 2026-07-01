@@ -283,6 +283,52 @@ label {
   display: inline-flex;
 }
 
+.info-dot:hover,
+.info-dot:focus {
+  color: #172033;
+}
+
+.info-tooltip {
+  background: #172033;
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.35;
+  max-width: calc(100vw - 24px);
+  padding: 7px 8px;
+  pointer-events: none;
+  position: fixed;
+  transform: translateX(-50%);
+  white-space: normal;
+  z-index: 20;
+}
+
+.info-tooltip::before {
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  content: "";
+  left: 50%;
+  pointer-events: none;
+  position: absolute;
+  transform: translateX(-50%);
+}
+
+.info-tooltip.above {
+  transform: translate(-50%, -100%);
+}
+
+.info-tooltip.above::before {
+  border-top: 5px solid #172033;
+  bottom: -5px;
+}
+
+.info-tooltip.below::before {
+  border-bottom: 5px solid #172033;
+  top: -5px;
+}
+
 .check {
   align-items: center;
   display: flex;

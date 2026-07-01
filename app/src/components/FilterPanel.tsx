@@ -1,5 +1,5 @@
-import { Info } from "lucide-react";
-import { useMemo } from "react";
+import { CircleHelp } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
 import type { Filters } from "../data/filters";
 
@@ -17,13 +17,73 @@ function numericValue(value: string) {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+const TOOLTIP_WIDTH = 230;
+const TOOLTIP_MARGIN = 12;
+
+function FilterHelp({ text }: { text: string }) {
+  const iconRef = useRef<HTMLSpanElement>(null);
+  const [tooltip, setTooltip] = useState<{
+    x: number;
+    y: number;
+    placement: "above" | "below";
+  }>();
+
+  const showTooltip = () => {
+    const rect = iconRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const halfWidth = TOOLTIP_WIDTH / 2;
+    const x = Math.min(
+      window.innerWidth - TOOLTIP_MARGIN - halfWidth,
+      Math.max(TOOLTIP_MARGIN + halfWidth, rect.left + rect.width / 2)
+    );
+    const placement = rect.top < 90 ? "below" : "above";
+    setTooltip({
+      x,
+      y: placement === "above" ? rect.top - 8 : rect.bottom + 8,
+      placement
+    });
+  };
+
+  return (
+    <>
+      <span
+        ref={iconRef}
+        className="info-dot"
+        aria-label={text}
+        tabIndex={0}
+        onBlur={() => setTooltip(undefined)}
+        onFocus={showTooltip}
+        onMouseEnter={showTooltip}
+        onMouseLeave={() => setTooltip(undefined)}
+      >
+        <CircleHelp size={13} />
+      </span>
+      {tooltip && (
+        <span
+          className={`info-tooltip ${tooltip.placement}`}
+          role="tooltip"
+          style={{
+            left: tooltip.x,
+            top: tooltip.y,
+            width: `min(${TOOLTIP_WIDTH}px, calc(100vw - ${TOOLTIP_MARGIN * 2}px))`
+          }}
+        >
+          {text}
+        </span>
+      )}
+    </>
+  );
+}
+
 function CheckboxFilter({
   label,
+  help,
   values,
   selected,
   onChange
 }: {
   label: string;
+  help: string;
   values: string[];
   selected: string[];
   onChange: (values: string[]) => void;
@@ -41,7 +101,10 @@ function CheckboxFilter({
   return (
     <fieldset className="checkbox-filter">
       <legend>
-        <span>{label}</span>
+        <span className="filter-label">
+          <span>{label}</span>
+          <FilterHelp text={help} />
+        </span>
         {selected.length > 0 && (
           <button type="button" onClick={() => onChange([])}>
             Clear {selected.length}
@@ -79,6 +142,7 @@ function formatRange(range: { min: number; max: number } | undefined, suffix = "
 
 function NumericFilter({
   label,
+  help,
   range,
   suffix,
   min,
@@ -87,6 +151,7 @@ function NumericFilter({
   onMax
 }: {
   label: string;
+  help: string;
   range: { min: number; max: number } | undefined;
   suffix?: string;
   min?: number;
@@ -94,14 +159,12 @@ function NumericFilter({
   onMin: (value: number | undefined) => void;
   onMax: (value: number | undefined) => void;
 }) {
-  const hint = formatRange(range, suffix);
+  const hint = `${help} ${formatRange(range, suffix)}`;
   return (
     <div className="numeric-filter">
       <div className="filter-label">
         <span>{label}</span>
-        <span className="info-dot" title={hint} aria-label={hint}>
-          <Info size={13} />
-        </span>
+        <FilterHelp text={hint} />
       </div>
       <div className="two-col">
         <label>
@@ -154,7 +217,10 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
         <span>Total: {metadata.rowCount}</span>
       </div>
       <label>
-        Search
+        <span className="filter-label">
+          <span>Search</span>
+          <FilterHelp text="Searches sample ID, locality, and group text in the loaded dataset." />
+        </span>
         <input
           type="search"
           placeholder="sample, locality, group"
@@ -164,12 +230,14 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
       </label>
       <CheckboxFilter
         label="Group"
+        help="Keeps only samples whose group matches one of the checked values."
         values={metadata.groups}
         selected={filters.groups}
         onChange={(groups) => patch({ groups })}
       />
       <CheckboxFilter
         label="Sequencing"
+        help="Keeps only samples whose sequencing type matches one of the checked values."
         values={metadata.sequencingTypes}
         selected={filters.sequencingTypes}
         onChange={(sequencingTypes) => patch({ sequencingTypes })}
@@ -177,6 +245,7 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
       {sigmaRange && (
         <NumericFilter
           label="Sigma final"
+          help="Filters by final prediction uncertainty; lower values are more precise."
           range={sigmaRange}
           suffix=" km"
           min={filters.sigmaFinal.min}
@@ -188,6 +257,7 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
       {errorRange && (
         <NumericFilter
           label="Error"
+          help="Filters by prediction error distance between true and predicted locations."
           range={errorRange}
           suffix=" km"
           min={filters.errorKm.min}
@@ -199,6 +269,7 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
       {alphaRange && (
         <NumericFilter
           label="Alpha precision"
+          help="Filters by alpha precision values when that field is present in the dataset."
           range={alphaRange}
           min={filters.alphaPrecision.min}
           max={filters.alphaPrecision.max}
@@ -212,28 +283,44 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
           checked={filters.bbox.enabled}
           onChange={(event) => patchBbox({ enabled: event.target.checked })}
         />
-        Coordinate bounding box
+        <span>Coordinate bounding box</span>
+        <FilterHelp text="Restricts samples to the longitude and latitude range below." />
       </label>
       <div className="two-col">
         <label>
-          Min lon
+          <span className="filter-label">
+            <span>Min lon</span>
+            <FilterHelp text="Western edge of the coordinate bounding box." />
+          </span>
           <input type="number" value={filters.bbox.minLon} onChange={(e) => patchBbox({ minLon: Number(e.target.value) })} />
         </label>
         <label>
-          Max lon
+          <span className="filter-label">
+            <span>Max lon</span>
+            <FilterHelp text="Eastern edge of the coordinate bounding box." />
+          </span>
           <input type="number" value={filters.bbox.maxLon} onChange={(e) => patchBbox({ maxLon: Number(e.target.value) })} />
         </label>
         <label>
-          Min lat
+          <span className="filter-label">
+            <span>Min lat</span>
+            <FilterHelp text="Southern edge of the coordinate bounding box." />
+          </span>
           <input type="number" value={filters.bbox.minLat} onChange={(e) => patchBbox({ minLat: Number(e.target.value) })} />
         </label>
         <label>
-          Max lat
+          <span className="filter-label">
+            <span>Max lat</span>
+            <FilterHelp text="Northern edge of the coordinate bounding box." />
+          </span>
           <input type="number" value={filters.bbox.maxLat} onChange={(e) => patchBbox({ maxLat: Number(e.target.value) })} />
         </label>
       </div>
       <label>
-        Coordinate basis
+        <span className="filter-label">
+          <span>Coordinate basis</span>
+          <FilterHelp text="Chooses whether the bounding box is tested against true locations, predicted locations, or either endpoint." />
+        </span>
         <select value={filters.bbox.basis} onChange={(e) => patchBbox({ basis: e.target.value as Filters["bbox"]["basis"] })}>
           <option value="true">True location</option>
           <option value="predicted">Predicted location</option>
@@ -246,7 +333,8 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
           checked={filters.selectedOnly}
           onChange={(event) => patch({ selectedOnly: event.target.checked })}
         />
-        Show only selected sample
+        <span>Show only selected sample</span>
+        <FilterHelp text="Narrows the current view to the sample selected on the map or in the inspector." />
       </label>
     </section>
   );
