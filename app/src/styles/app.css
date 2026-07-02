@@ -130,16 +130,48 @@ label {
 }
 
 .control-panel,
-.inspector {
+.right-panel {
   background: #f8fafc;
   border-right: 1px solid #d9e2ec;
   overflow-y: auto;
   padding: 14px;
 }
 
-.inspector {
+.right-panel {
   border-left: 1px solid #d9e2ec;
   border-right: 0;
+  display: grid;
+  gap: 0;
+  grid-template-rows: minmax(0, 1fr);
+  padding: 0;
+}
+
+.right-panel > .legend,
+.right-panel > .inspector {
+  padding: 14px;
+}
+
+.right-panel > .legend {
+  margin-bottom: 0;
+  max-height: 45vh;
+  overflow-y: auto;
+}
+
+.right-panel > .inspector {
+  overflow-y: auto;
+}
+
+.right-panel.legend-top,
+.right-panel.legend-bottom {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.right-panel.legend-bottom {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.inspector {
+  background: #f8fafc;
 }
 
 .workspace {
@@ -184,6 +216,45 @@ label {
   right: 12px;
   top: 12px;
   z-index: 3;
+}
+
+.map-legend {
+  background: rgba(248, 250, 252, 0.94);
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.14);
+  max-height: min(60vh, 460px);
+  max-width: min(320px, calc(100vw - 32px));
+  overflow-y: auto;
+  position: absolute;
+  width: 300px;
+  z-index: 3;
+}
+
+.map-legend .legend {
+  border-bottom: 0;
+  margin-bottom: 0;
+  padding: 12px;
+}
+
+.map-legend-top-left {
+  left: 12px;
+  top: 60px;
+}
+
+.map-legend-top-right {
+  right: 12px;
+  top: 60px;
+}
+
+.map-legend-bottom-left {
+  bottom: 12px;
+  left: 12px;
+}
+
+.map-legend-bottom-right {
+  bottom: 12px;
+  right: 12px;
 }
 
 .panel-section,
@@ -663,7 +734,7 @@ th {
     grid-template-columns: 320px minmax(0, 1fr);
   }
 
-  .inspector {
+  .right-panel {
     bottom: 0;
     box-shadow: 0 -12px 32px rgba(15, 23, 42, 0.16);
     max-height: 45vh;
@@ -671,6 +742,10 @@ th {
     right: 0;
     width: 330px;
     z-index: 4;
+  }
+
+  .right-panel > .legend {
+    max-height: 22vh;
   }
 }
 
@@ -688,7 +763,7 @@ th {
     grid-row: 1;
   }
 
-  .inspector {
+  .right-panel {
     left: 0;
     max-height: 50vh;
     width: auto;

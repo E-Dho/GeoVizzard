@@ -57,6 +57,14 @@ export type MapViewState = {
   bearing: number;
 };
 
+export type LegendPlacement = "left" | "map" | "right-top" | "right-bottom";
+export type LegendMapCorner = "top-left" | "top-right" | "bottom-left" | "bottom-right";
+
+export type UiSettings = {
+  legendPlacement: LegendPlacement;
+  legendMapCorner: LegendMapCorner;
+};
+
 export const defaultLayerSettings: LayerSettings = {
   trueLocations: true,
   predictedLocations: true,
@@ -92,6 +100,11 @@ export const defaultViewState: MapViewState = {
   bearing: 0
 };
 
+export const defaultUiSettings: UiSettings = {
+  legendPlacement: "left",
+  legendMapCorner: "bottom-left"
+};
+
 function downloadText(filename: string, text: string, type = "text/plain") {
   const blob = new Blob([text], { type });
   const url = URL.createObjectURL(blob);
@@ -111,6 +124,7 @@ export function useAppState() {
   const [timeSettings, setTimeSettings] = useState<TimeSettings>(defaultTimeSettings);
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [layerSettings, setLayerSettings] = useState<LayerSettings>(defaultLayerSettings);
+  const [uiSettings, setUiSettings] = useState<UiSettings>(defaultUiSettings);
   const [viewState, setViewState] = useState<MapViewState>(defaultViewState);
   const [selectedSampleId, setSelectedSampleId] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -232,10 +246,10 @@ export function useAppState() {
   const exportSettings = useCallback(() => {
     downloadText(
       "geovizzard-settings.json",
-      JSON.stringify({ filters, timeSettings, layerSettings, viewState, schemaMapping }, null, 2),
+      JSON.stringify({ filters, timeSettings, layerSettings, uiSettings, viewState, schemaMapping }, null, 2),
       "application/json"
     );
-  }, [filters, timeSettings, layerSettings, viewState, schemaMapping]);
+  }, [filters, timeSettings, layerSettings, uiSettings, viewState, schemaMapping]);
 
   const loadSettings = useCallback(async (file: File) => {
     const text = await file.text();
@@ -246,6 +260,9 @@ export function useAppState() {
     }
     if (parsed.layerSettings) {
       setLayerSettings({ ...defaultLayerSettings, ...parsed.layerSettings });
+    }
+    if (parsed.uiSettings) {
+      setUiSettings({ ...defaultUiSettings, ...parsed.uiSettings });
     }
     if (parsed.viewState) setViewState(parsed.viewState);
     if (parsed.schemaMapping) {
@@ -268,6 +285,8 @@ export function useAppState() {
     layerSettings,
     deferredLayerSettings,
     setLayerSettings,
+    uiSettings,
+    setUiSettings,
     viewState,
     setViewState,
     selectedSample,

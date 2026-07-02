@@ -1,6 +1,7 @@
 import { Download, FileJson, Upload } from "lucide-react";
 import { FilterPanel } from "./FilterPanel";
 import { LayerControls } from "./LayerControls";
+import { LayoutControls } from "./LayoutControls";
 import { TimeControls } from "./TimeControls";
 import { Legend } from "./Legend";
 import type { useAppState } from "../state/useAppState";
@@ -64,12 +65,15 @@ export function ControlPanel(state: Props) {
         hasSigma={hasSigma}
         hasPotentialOutliers={hasPotentialOutliers}
       />
-      <Legend
-        samples={state.filteredSamples}
-        allSamples={state.samples}
-        metadata={state.metadata}
-        settings={state.deferredLayerSettings}
-      />
+      <LayoutControls settings={state.uiSettings} setSettings={state.setUiSettings} />
+      {state.uiSettings.legendPlacement === "left" && (
+        <Legend
+          samples={state.filteredSamples}
+          allSamples={state.samples}
+          metadata={state.metadata}
+          settings={state.deferredLayerSettings}
+        />
+      )}
     </aside>
   );
 }
