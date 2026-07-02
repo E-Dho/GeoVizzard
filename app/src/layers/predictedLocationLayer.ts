@@ -1,5 +1,5 @@
 import { ScatterplotLayer } from "@deck.gl/layers";
-import type { PickingInfo } from "@deck.gl/core";
+import type { CoordinateSystem, PickingInfo } from "@deck.gl/core";
 import type { SampleRecord } from "../data/schema";
 import type { LayerSettings } from "../state/useAppState";
 import { colorForSample, extentForColorMode, PRED_COLOR } from "./colors";
@@ -7,12 +7,14 @@ import { colorForSample, extentForColorMode, PRED_COLOR } from "./colors";
 export function predictedLocationLayer(
   samples: SampleRecord[],
   settings: LayerSettings,
-  onClick: (sample: SampleRecord) => void
+  onClick: (sample: SampleRecord) => void,
+  options: { coordinateSystem?: CoordinateSystem; id?: string } = {}
 ) {
   const colorExtent = extentForColorMode(settings.pointColorMode, samples);
   return new ScatterplotLayer<SampleRecord>({
-    id: "predicted-locations",
+    id: options.id ?? "predicted-locations",
     data: samples,
+    ...(options.coordinateSystem !== undefined ? { coordinateSystem: options.coordinateSystem } : {}),
     visible: settings.predictedLocations,
     pickable: true,
     radiusUnits: "pixels",

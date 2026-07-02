@@ -1,5 +1,5 @@
 import { ScatterplotLayer } from "@deck.gl/layers";
-import type { PickingInfo } from "@deck.gl/core";
+import type { CoordinateSystem, PickingInfo } from "@deck.gl/core";
 import type { SampleRecord } from "../data/schema";
 import type { LayerSettings } from "../state/useAppState";
 
@@ -12,7 +12,8 @@ type OutlierPoint = SampleRecord & {
 export function outlierHighlightLayer(
   samples: SampleRecord[],
   settings: LayerSettings,
-  onClick: (sample: SampleRecord) => void
+  onClick: (sample: SampleRecord) => void,
+  options: { coordinateSystem?: CoordinateSystem; id?: string } = {}
 ) {
   const data: OutlierPoint[] = settings.potentialOutliers
     ? samples
@@ -34,8 +35,9 @@ export function outlierHighlightLayer(
     : [];
 
   return new ScatterplotLayer<OutlierPoint>({
-    id: "potential-outlier-highlight",
+    id: options.id ?? "potential-outlier-highlight",
     data,
+    ...(options.coordinateSystem !== undefined ? { coordinateSystem: options.coordinateSystem } : {}),
     visible: settings.potentialOutliers,
     pickable: true,
     radiusUnits: "pixels",

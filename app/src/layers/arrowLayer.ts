@@ -1,5 +1,5 @@
 import { LineLayer } from "@deck.gl/layers";
-import type { PickingInfo } from "@deck.gl/core";
+import type { CoordinateSystem, PickingInfo } from "@deck.gl/core";
 import type { SampleRecord } from "../data/schema";
 import type { LayerSettings } from "../state/useAppState";
 import { colorForSample, extentForColorMode } from "./colors";
@@ -13,13 +13,15 @@ function sampled(samples: SampleRecord[], limit: number) {
 export function arrowLayer(
   samples: SampleRecord[],
   settings: LayerSettings,
-  onClick: (sample: SampleRecord) => void
+  onClick: (sample: SampleRecord) => void,
+  options: { coordinateSystem?: CoordinateSystem; id?: string } = {}
 ) {
   const data = sampled(samples, settings.maxArrows);
   const colorExtent = extentForColorMode(settings.arrowColorMode, samples);
   return new LineLayer<SampleRecord>({
-    id: "prediction-arrows",
+    id: options.id ?? "prediction-arrows",
     data,
+    ...(options.coordinateSystem !== undefined ? { coordinateSystem: options.coordinateSystem } : {}),
     visible: settings.arrows,
     pickable: true,
     getSourcePosition: (sample) => [sample.true_lon, sample.true_lat],
