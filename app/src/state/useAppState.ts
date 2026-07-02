@@ -1,5 +1,6 @@
 import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { applyFilters, defaultFilters, exportSamplesCsv, type Filters } from "../data/filters";
+import { exportSamplesGeoPackage } from "../data/exportGeoPackage";
 import {
   defaultSchemaMapping,
   type DatasetMetadata,
@@ -107,6 +108,10 @@ export const defaultUiSettings: UiSettings = {
 
 function downloadText(filename: string, text: string, type = "text/plain") {
   const blob = new Blob([text], { type });
+  downloadBlob(filename, blob);
+}
+
+function downloadBlob(filename: string, blob: Blob) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
@@ -243,6 +248,19 @@ export function useAppState() {
     downloadText("geovizzard-filtered-samples.csv", exportSamplesCsv(filteredSamples), "text/csv");
   }, [filteredSamples]);
 
+  const exportFilteredGpkg = useCallback(async () => {
+    try {
+      const bytes = await exportSamplesGeoPackage(filteredSamples);
+      downloadBlob(
+        "geovizzard-filtered-samples.gpkg",
+        new Blob([bytes], { type: "application/geopackage+sqlite3" })
+      );
+      setError(undefined);
+    } catch (exportError) {
+      setError(exportError instanceof Error ? exportError.message : String(exportError));
+    }
+  }, [filteredSamples]);
+
   const exportSettings = useCallback(() => {
     downloadText(
       "geovizzard-settings.json",
@@ -301,6 +319,7 @@ export function useAppState() {
     loadFile,
     loadSettings,
     exportFilteredCsv,
+    exportFilteredGpkg,
     exportSettings
   };
 }

@@ -36,6 +36,7 @@ export function ControlPanel(state: Props) {
         </details>
         <div className="button-row">
           <button onClick={state.exportFilteredCsv}><Download size={15} />CSV</button>
+          <button onClick={state.exportFilteredGpkg}><Download size={15} />GPKG</button>
           <button onClick={state.exportSettings}><FileJson size={15} />Settings</button>
           <label className="small-file">
             <Upload size={15} />Load settings

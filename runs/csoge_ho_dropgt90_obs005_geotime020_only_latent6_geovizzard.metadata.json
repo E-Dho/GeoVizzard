@@ -1,0 +1,36 @@
+{
+  "created": "2026-07-02",
+  "dataset_prefix": "/Users/edo/Code/Hiwi_new/Daten/v62.0_HO_public_europe_country_ab_ge20_drop_premerge_gt90/v62.0_HO_public_europe_country_ab_ge20_drop_premerge_gt90",
+  "k_neighbors": 15,
+  "latent_dim": 6,
+  "local_analysis_dir": "/Users/edo/Code/Hiwi_new/aDNA_Models/Country-Supervised Overlap Graph Embedding (CS-OGE)/analysis/csoge_ho_dropgt90_obs005_geotime020_only_latent6_18542676",
+  "n_samples": 7704,
+  "name": "CS-OGE HO gt90 geo-time-only latent6",
+  "notes": "potential_outlier is set to false for all rows; no migrant/outlier analysis was applied in this conversion.",
+  "prediction_method": "leave-one-out latent-space kNN mean coordinate",
+  "schema": {
+    "age_bp": "age_bp",
+    "alpha_precision": "alpha_precision",
+    "group": "group",
+    "potential_outlier": "potential_outlier",
+    "pred_lat": "pred_lat",
+    "pred_lon": "pred_lon",
+    "sample_id": "sample_id",
+    "sequencing_type": "sequencing_type",
+    "sigma_final": "sigma_final",
+    "true_lat": "true_lat",
+    "true_lon": "true_lon"
+  },
+  "source_graph_job_id": "18542673",
+  "source_run_dir": "/work_beegfs/sunip956/projects/overlap_embed_runs/csoge_ho_dropgt90_obs005_geotime020_only_latent6_18542676",
+  "source_run_id": "18542676",
+  "supervision": {
+    "geo_time_alpha": 1.0,
+    "geo_time_sigma_km": 1000.0,
+    "geo_time_sigma_years": 1000.0,
+    "geo_time_temperature": 1.0,
+    "lambda_country": 0.0,
+    "lambda_geo_time": 0.2,
+    "lambda_original_group": 0.0
+  }
+}
