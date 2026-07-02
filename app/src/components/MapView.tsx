@@ -14,6 +14,8 @@ import { heatmapLayer } from "../layers/heatmapLayer";
 import { selectedSampleLayer } from "../layers/selectedSampleLayer";
 import { outlierHighlightLayer } from "../layers/outlierHighlightLayer";
 
+type BaseMap = "positron" | "topo" | "blank";
+
 const positronNoLabels: StyleSpecification = {
   version: 8,
   sources: {
@@ -30,10 +32,43 @@ const positronNoLabels: StyleSpecification = {
   layers: [{ id: "carto", type: "raster", source: "carto", minzoom: 0, maxzoom: 19 }]
 };
 
+const openTopoMap: StyleSpecification = {
+  version: 8,
+  sources: {
+    opentopo: {
+      type: "raster",
+      tiles: ["https://tile.opentopomap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution:
+        "&copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)"
+    }
+  },
+  layers: [
+    {
+      id: "opentopo",
+      type: "raster",
+      source: "opentopo",
+      minzoom: 0,
+      maxzoom: 17,
+      paint: {
+        "raster-opacity": 0.58,
+        "raster-saturation": -0.45,
+        "raster-brightness-min": 0.18
+      }
+    }
+  ]
+};
+
 const blankMap: StyleSpecification = {
   version: 8,
   sources: {},
   layers: [{ id: "background", type: "background", paint: { "background-color": "#f8fafc" } }]
+};
+
+const baseMapStyles: Record<BaseMap, StyleSpecification> = {
+  positron: positronNoLabels,
+  topo: openTopoMap,
+  blank: blankMap
 };
 
 type Props = {
@@ -53,7 +88,7 @@ export function MapView({
   setViewState,
   onSelectSample
 }: Props) {
-  const [blank, setBlank] = useState(false);
+  const [baseMap, setBaseMap] = useState<BaseMap>("positron");
   const [localViewState, setLocalViewState] = useState<MapViewState>(viewState);
   const latestViewState = useRef<MapViewState>(viewState);
   const heatmapSamples =
@@ -106,10 +141,13 @@ export function MapView({
   return (
     <section className="map-shell">
       <div className="map-toolbar">
-        <button className={blank ? "" : "active"} onClick={() => setBlank(false)}>
+        <button className={baseMap === "positron" ? "active" : ""} onClick={() => setBaseMap("positron")}>
           Positron
         </button>
-        <button className={blank ? "active" : ""} onClick={() => setBlank(true)}>
+        <button className={baseMap === "topo" ? "active" : ""} onClick={() => setBaseMap("topo")}>
+          Topo
+        </button>
+        <button className={baseMap === "blank" ? "active" : ""} onClick={() => setBaseMap("blank")}>
           Blank
         </button>
       </div>
@@ -123,7 +161,7 @@ export function MapView({
           object?.sample_id ? `${object.sample_id}\nAge: ${object.age_bp} BP` : null
         }
       >
-        <Map mapLib={maplibregl} mapStyle={blank ? blankMap : positronNoLabels} />
+        <Map mapLib={maplibregl} mapStyle={baseMapStyles[baseMap]} />
       </DeckGL>
     </section>
   );
