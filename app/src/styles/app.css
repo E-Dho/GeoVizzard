@@ -242,6 +242,123 @@ label {
   padding: 8px;
 }
 
+.segmented-control {
+  background: #e2e8f0;
+  border-radius: 6px;
+  display: grid;
+  gap: 3px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 3px;
+}
+
+.segmented-control button {
+  background: transparent;
+  border-color: transparent;
+  color: #334155;
+  min-height: 30px;
+  padding: 5px 8px;
+}
+
+.segmented-control button.active {
+  background: #fff;
+  border-color: #cbd5e1;
+  color: #172033;
+}
+
+.manual-range-control {
+  display: grid;
+  gap: 8px;
+}
+
+.range-readout {
+  color: #475569;
+  display: flex;
+  font-size: 12px;
+  justify-content: space-between;
+}
+
+.dual-range {
+  height: 28px;
+  margin: 2px 0;
+  position: relative;
+}
+
+.dual-range::before,
+.dual-range::after {
+  border-radius: 999px;
+  content: "";
+  height: 6px;
+  left: 0;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.dual-range::before {
+  background: #cbd5e1;
+  right: 0;
+}
+
+.dual-range::after {
+  background: #0f766e;
+  left: var(--range-start);
+  right: calc(100% - var(--range-end));
+}
+
+.dual-range input[type="range"] {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  height: 28px;
+  left: 0;
+  margin: 0;
+  min-height: 28px;
+  padding: 0;
+  pointer-events: none;
+  position: absolute;
+  top: 0;
+  width: 100%;
+  z-index: 2;
+}
+
+.dual-range input[type="range"]::-webkit-slider-runnable-track {
+  background: transparent;
+  height: 6px;
+}
+
+.dual-range input[type="range"]::-moz-range-track {
+  background: transparent;
+  height: 6px;
+}
+
+.dual-range input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  background: #fff;
+  border: 2px solid #0f766e;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.24);
+  cursor: grab;
+  height: 18px;
+  margin-top: -6px;
+  pointer-events: auto;
+  width: 18px;
+}
+
+.dual-range input[type="range"]::-moz-range-thumb {
+  background: #fff;
+  border: 2px solid #0f766e;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.24);
+  cursor: grab;
+  height: 18px;
+  pointer-events: auto;
+  width: 18px;
+}
+
+.dual-range input.upper {
+  z-index: 3;
+}
+
 .playback-row {
   display: grid;
   gap: 6px;

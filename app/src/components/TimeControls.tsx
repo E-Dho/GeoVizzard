@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
 import { Play, SkipBack, SkipForward, Square } from "lucide-react";
 import type { DatasetMetadata } from "../data/schema";
 import type { TimeSettings } from "../data/time";
@@ -9,10 +9,14 @@ type Props = {
   metadata: DatasetMetadata;
   timeSettings: TimeSettings;
   setTimeSettings: React.Dispatch<React.SetStateAction<TimeSettings>>;
-  setCenterAge: (age: number) => void;
+  setCenterAge: (age: number, options?: { snap?: boolean }) => void;
   window: { start: number; end: number };
   primaryWindowCount: number;
 };
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
 export function TimeControls({
   metadata,
@@ -31,6 +35,21 @@ export function TimeControls({
     () => [...metadata.availableAges].sort((a, b) => a - b),
     [metadata.availableAges]
   );
+  const rangeSpan = Math.max(1, maxAge - minAge);
+  const lowerBound = clamp(
+    Math.min(timeSettings.rangeStartAgeBp, timeSettings.rangeEndAgeBp),
+    minAge,
+    maxAge
+  );
+  const upperBound = clamp(
+    Math.max(timeSettings.rangeStartAgeBp, timeSettings.rangeEndAgeBp),
+    minAge,
+    maxAge
+  );
+  const rangeSliderStyle = {
+    "--range-start": `${((lowerBound - minAge) / rangeSpan) * 100}%`,
+    "--range-end": `${((upperBound - minAge) / rangeSpan) * 100}%`
+  } as CSSProperties;
 
   const getNextAge = useCallback(
     (direction: PlaybackDirection) => {
@@ -58,8 +77,8 @@ export function TimeControls({
   );
 
   useEffect(() => {
-    if (!showPlayback) setPlaying(false);
-  }, [showPlayback]);
+    if (!showPlayback || timeSettings.timeMode === "bounds") setPlaying(false);
+  }, [showPlayback, timeSettings.timeMode]);
 
   useEffect(() => {
     if (!playing) return undefined;
@@ -72,36 +91,154 @@ export function TimeControls({
 
   const canStepYounger = getNextAge("younger") !== undefined;
   const canStepOlder = getNextAge("older") !== undefined;
+  const snapCenterAge = () => setCenterAge(timeSettings.centerAgeBp, { snap: true });
+  const setRangeStart = (age: number) => {
+    setTimeSettings((current) => ({
+      ...current,
+      rangeStartAgeBp: Math.min(age, current.rangeEndAgeBp)
+    }));
+  };
+  const setRangeEnd = (age: number) => {
+    setTimeSettings((current) => ({
+      ...current,
+      rangeEndAgeBp: Math.max(age, current.rangeStartAgeBp)
+    }));
+  };
+  const snapRangeStart = () => {
+    if (!timeSettings.snapToAvailableDates) return;
+    const snapped = availableAges.length
+      ? availableAges.reduce((best, candidate) =>
+          Math.abs(candidate - timeSettings.rangeStartAgeBp) <
+          Math.abs(best - timeSettings.rangeStartAgeBp)
+            ? candidate
+            : best
+        )
+      : timeSettings.rangeStartAgeBp;
+    setRangeStart(snapped);
+  };
+  const snapRangeEnd = () => {
+    if (!timeSettings.snapToAvailableDates) return;
+    const snapped = availableAges.length
+      ? availableAges.reduce((best, candidate) =>
+          Math.abs(candidate - timeSettings.rangeEndAgeBp) <
+          Math.abs(best - timeSettings.rangeEndAgeBp)
+            ? candidate
+            : best
+        )
+      : timeSettings.rangeEndAgeBp;
+    setRangeEnd(snapped);
+  };
 
   return (
     <section className="panel-section">
       <h2>Time</h2>
       <div className="metric-row">
-        <span>Center: {Math.round(timeSettings.centerAgeBp)} BP</span>
+        {timeSettings.timeMode === "center" && (
+          <span>Center: {Math.round(timeSettings.centerAgeBp)} BP</span>
+        )}
+        {timeSettings.timeMode === "bounds" && (
+          <span>Range: {Math.round(lowerBound)}-{Math.round(upperBound)} BP</span>
+        )}
         <span>Visible: {Math.round(window.start)}-{Math.round(window.end)} BP</span>
         <span>Samples: {primaryWindowCount}</span>
       </div>
-      <label>
-        Center age
-        <input
-          type="range"
-          min={minAge}
-          max={maxAge}
-          value={timeSettings.centerAgeBp}
-          onChange={(event) => setCenterAge(Number(event.target.value))}
-        />
-      </label>
-      <label>
-        Window width years
-        <input
-          type="number"
-          min={1}
-          value={timeSettings.windowWidthYears}
-          onChange={(event) =>
-            setTimeSettings((current) => ({ ...current, windowWidthYears: Number(event.target.value) }))
-          }
-        />
-      </label>
+      <div className="segmented-control" role="group" aria-label="Time slider mode">
+        <button
+          type="button"
+          className={timeSettings.timeMode === "center" ? "active" : ""}
+          onClick={() => setTimeSettings((current) => ({ ...current, timeMode: "center" }))}
+        >
+          Center
+        </button>
+        <button
+          type="button"
+          className={timeSettings.timeMode === "bounds" ? "active" : ""}
+          onClick={() => setTimeSettings((current) => ({ ...current, timeMode: "bounds" }))}
+        >
+          Manual range
+        </button>
+      </div>
+      {timeSettings.timeMode === "center" ? (
+        <>
+          <label>
+            Center age
+            <input
+              type="range"
+              min={minAge}
+              max={maxAge}
+              value={timeSettings.centerAgeBp}
+              onChange={(event) => setCenterAge(Number(event.target.value))}
+              onKeyUp={snapCenterAge}
+              onMouseUp={snapCenterAge}
+              onTouchEnd={snapCenterAge}
+            />
+          </label>
+          <label>
+            Window width years
+            <input
+              type="number"
+              min={1}
+              value={timeSettings.windowWidthYears}
+              onChange={(event) =>
+                setTimeSettings((current) => ({ ...current, windowWidthYears: Number(event.target.value) }))
+              }
+            />
+          </label>
+        </>
+      ) : (
+        <div className="manual-range-control">
+          <div className="range-readout">
+            <span>Lower: {Math.round(lowerBound)} BP</span>
+            <span>Upper: {Math.round(upperBound)} BP</span>
+          </div>
+          <div className="dual-range" style={rangeSliderStyle}>
+            <input
+              className="lower"
+              type="range"
+              min={minAge}
+              max={maxAge}
+              value={lowerBound}
+              aria-label="Lower time bound"
+              onChange={(event) => setRangeStart(Number(event.target.value))}
+              onKeyUp={snapRangeStart}
+              onMouseUp={snapRangeStart}
+              onTouchEnd={snapRangeStart}
+            />
+            <input
+              className="upper"
+              type="range"
+              min={minAge}
+              max={maxAge}
+              value={upperBound}
+              aria-label="Upper time bound"
+              onChange={(event) => setRangeEnd(Number(event.target.value))}
+              onKeyUp={snapRangeEnd}
+              onMouseUp={snapRangeEnd}
+              onTouchEnd={snapRangeEnd}
+            />
+          </div>
+          <div className="two-col">
+            <label>
+              Lower bound
+              <input
+                type="number"
+                value={Math.round(lowerBound)}
+                onChange={(event) => setRangeStart(Number(event.target.value))}
+                onBlur={snapRangeStart}
+              />
+            </label>
+            <label>
+              Upper bound
+              <input
+                type="number"
+                value={Math.round(upperBound)}
+                onChange={(event) => setRangeEnd(Number(event.target.value))}
+                onBlur={snapRangeEnd}
+              />
+            </label>
+          </div>
+        </div>
+      )}
       <label className="check">
         <input
           type="checkbox"
@@ -112,15 +249,17 @@ export function TimeControls({
         />
         Snap to available dates
       </label>
-      <label className="check">
-        <input
-          type="checkbox"
-          checked={showPlayback}
-          onChange={(event) => setShowPlayback(event.target.checked)}
-        />
-        Show playback controls
-      </label>
-      {showPlayback && (
+      {timeSettings.timeMode === "center" && (
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={showPlayback}
+            onChange={(event) => setShowPlayback(event.target.checked)}
+          />
+          Show playback controls
+        </label>
+      )}
+      {timeSettings.timeMode === "center" && showPlayback && (
         <div className="playback-controls">
           <div className="playback-row">
             <button

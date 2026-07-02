@@ -62,7 +62,7 @@ export const defaultLayerSettings: LayerSettings = {
   predictedLocations: true,
   arrows: true,
   uncertainty: false,
-  heatmap: true,
+  heatmap: false,
   potentialOutliers: true,
   selectedSample: true,
   neighbours: true,
@@ -125,14 +125,29 @@ export function useAppState() {
     setSchemaMapping(dataset.schemaMapping);
     setSchemaText(JSON.stringify(dataset.schemaMapping, null, 2));
     setError(undefined);
-    setTimeSettings((current) => ({
-      ...current,
-      centerAgeBp: nearestAge(current.centerAgeBp, dataset.metadata.availableAges),
-      windowWidthYears: Math.min(
-        Math.max(100, current.windowWidthYears),
-        Math.max(100, dataset.metadata.ageExtent[1] - dataset.metadata.ageExtent[0])
-      )
-    }));
+    setTimeSettings((current) => {
+      const extent = dataset.metadata.ageExtent;
+      const centerAgeBp = nearestAge(current.centerAgeBp, dataset.metadata.availableAges);
+      const rangeStartAgeBp = Math.min(
+        Math.max(current.rangeStartAgeBp ?? extent[0], extent[0]),
+        extent[1]
+      );
+      const rangeEndAgeBp = Math.min(
+        Math.max(current.rangeEndAgeBp ?? extent[1], extent[0]),
+        extent[1]
+      );
+      return {
+        ...defaultTimeSettings,
+        ...current,
+        centerAgeBp,
+        rangeStartAgeBp: Math.min(rangeStartAgeBp, rangeEndAgeBp),
+        rangeEndAgeBp: Math.max(rangeStartAgeBp, rangeEndAgeBp),
+        windowWidthYears: Math.min(
+          Math.max(100, current.windowWidthYears),
+          Math.max(100, extent[1] - extent[0])
+        )
+      };
+    });
     setFilters((current) => ({
       ...current,
       groups: [],
@@ -185,8 +200,8 @@ export function useAppState() {
   const window = visibleWindow(deferredTimeSettings, metadata.ageExtent);
 
   const setCenterAge = useCallback(
-    (age: number) => {
-      const snapped = timeSettings.snapToAvailableDates
+    (age: number, options?: { snap?: boolean }) => {
+      const snapped = options?.snap && timeSettings.snapToAvailableDates
         ? nearestAge(age, metadata.availableAges)
         : age;
       setTimeSettings((current) => ({ ...current, centerAgeBp: snapped }));
@@ -215,7 +230,9 @@ export function useAppState() {
     const text = await file.text();
     const parsed = JSON.parse(text);
     if (parsed.filters) setFilters(parsed.filters);
-    if (parsed.timeSettings) setTimeSettings(parsed.timeSettings);
+    if (parsed.timeSettings) {
+      setTimeSettings({ ...defaultTimeSettings, ...parsed.timeSettings });
+    }
     if (parsed.layerSettings) {
       setLayerSettings({ ...defaultLayerSettings, ...parsed.layerSettings });
     }

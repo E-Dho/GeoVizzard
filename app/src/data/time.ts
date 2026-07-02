@@ -1,10 +1,14 @@
 import type { SampleRecord } from "./schema";
 
 export type FadeCurve = "linear" | "exponential" | "step";
+export type TimeMode = "center" | "bounds";
 
 export type TimeSettings = {
+  timeMode: TimeMode;
   centerAgeBp: number;
   windowWidthYears: number;
+  rangeStartAgeBp: number;
+  rangeEndAgeBp: number;
   snapToAvailableDates: boolean;
   temporalFadeEnabled: boolean;
   fadeOlderOnly: boolean;
@@ -16,8 +20,11 @@ export type TimeSettings = {
 };
 
 export const defaultTimeSettings: TimeSettings = {
+  timeMode: "center",
   centerAgeBp: 3200,
   windowWidthYears: 500,
+  rangeStartAgeBp: 2950,
+  rangeEndAgeBp: 3450,
   snapToAvailableDates: true,
   temporalFadeEnabled: true,
   fadeOlderOnly: true,
@@ -40,6 +47,14 @@ export function clamp(value: number, min: number, max: number) {
 }
 
 export function visibleWindow(settings: TimeSettings, ageExtent: [number, number]) {
+  if (settings.timeMode === "bounds") {
+    const start = Math.min(settings.rangeStartAgeBp, settings.rangeEndAgeBp);
+    const end = Math.max(settings.rangeStartAgeBp, settings.rangeEndAgeBp);
+    return {
+      start: clamp(start, ageExtent[0], ageExtent[1]),
+      end: clamp(end, ageExtent[0], ageExtent[1])
+    };
+  }
   const half = settings.windowWidthYears / 2;
   return {
     start: clamp(settings.centerAgeBp - half, ageExtent[0], ageExtent[1]),
@@ -82,8 +97,7 @@ export function temporalAlpha(ageBp: number, settings: TimeSettings, ageExtent: 
     };
   }
 
-  const half = settings.windowWidthYears / 2;
-  const distanceOutside = Math.max(0, Math.abs(ageBp - settings.centerAgeBp) - half);
+  const distanceOutside = ageBp < start ? start - ageBp : ageBp - end;
   if (distanceOutside > settings.fadeLookbackYears) {
     return { alpha: 0, inPrimaryWindow: false };
   }
