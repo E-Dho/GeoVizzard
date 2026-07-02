@@ -1,5 +1,5 @@
 import { CircleHelp } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { memo, useMemo, useRef, useState } from "react";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
 import type { Filters } from "../data/filters";
 
@@ -75,7 +75,7 @@ function FilterHelp({ text }: { text: string }) {
   );
 }
 
-function CheckboxFilter({
+const CheckboxFilter = memo(function CheckboxFilter({
   label,
   help,
   values,
@@ -125,7 +125,7 @@ function CheckboxFilter({
       </div>
     </fieldset>
   );
-}
+});
 
 function numericExtent(samples: SampleRecord[], accessor: (sample: SampleRecord) => number | undefined) {
   const values = samples.map(accessor).filter((value): value is number => value !== undefined);
@@ -140,7 +140,7 @@ function formatRange(range: { min: number; max: number } | undefined, suffix = "
   return `Available range: ${min}-${max}${suffix}`;
 }
 
-function NumericFilter({
+const NumericFilter = memo(function NumericFilter({
   label,
   help,
   range,
@@ -190,9 +190,9 @@ function NumericFilter({
       </div>
     </div>
   );
-}
+});
 
-export function FilterPanel({ filters, setFilters, metadata, filteredSamples, allSamples }: Props) {
+function FilterPanelComponent({ filters, setFilters, metadata, filteredSamples, allSamples }: Props) {
   const sigmaRange = useMemo(
     () => numericExtent(allSamples, (sample) => sample.sigma_final),
     [allSamples]
@@ -339,3 +339,5 @@ export function FilterPanel({ filters, setFilters, metadata, filteredSamples, al
     </section>
   );
 }
+
+export const FilterPanel = memo(FilterPanelComponent);

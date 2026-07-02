@@ -231,12 +231,14 @@ export function useAppState() {
 
   const setCenterAge = useCallback(
     (age: number, options?: { snap?: boolean }) => {
-      const snapped = options?.snap && timeSettings.snapToAvailableDates
-        ? nearestAge(age, metadata.availableAges)
-        : age;
-      setTimeSettings((current) => ({ ...current, centerAgeBp: snapped }));
+      setTimeSettings((current) => {
+        const snapped = options?.snap && current.snapToAvailableDates
+          ? nearestAge(age, metadata.availableAges)
+          : age;
+        return current.centerAgeBp === snapped ? current : { ...current, centerAgeBp: snapped };
+      });
     },
-    [metadata.availableAges, timeSettings.snapToAvailableDates]
+    [metadata.availableAges]
   );
 
   const setSchemaTextAndClearError = useCallback((next: string) => {

@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useEffect, useMemo, useState } from "react";
+import { type CSSProperties, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { Play, SkipBack, SkipForward, Square } from "lucide-react";
 import type { DatasetMetadata } from "../data/schema";
 import type { TimeSettings } from "../data/time";
@@ -19,6 +19,28 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
 
+function lowerBoundIndex(values: number[], target: number) {
+  let low = 0;
+  let high = values.length;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (values[mid] < target) low = mid + 1;
+    else high = mid;
+  }
+  return low;
+}
+
+function upperBoundIndex(values: number[], target: number) {
+  let low = 0;
+  let high = values.length;
+  while (low < high) {
+    const mid = Math.floor((low + high) / 2);
+    if (values[mid] <= target) low = mid + 1;
+    else high = mid;
+  }
+  return low;
+}
+
 export function TimeControls({
   metadata,
   timeSettings,
@@ -32,10 +54,27 @@ export function TimeControls({
   const [playing, setPlaying] = useState(false);
   const [playbackDirection, setPlaybackDirection] = useState<PlaybackDirection>("older");
   const [playbackIntervalMs, setPlaybackIntervalMs] = useState(900);
+  const [, startPlaybackTransition] = useTransition();
   const [minAge, maxAge] = metadata.ageExtent;
   const availableAges = useMemo(
     () => [...metadata.availableAges].sort((a, b) => a - b),
     [metadata.availableAges]
+  );
+  const ageLookup = useMemo(
+    () => ({
+      nextOlder: (age: number) => availableAges[upperBoundIndex(availableAges, age)],
+      nextYounger: (age: number) => availableAges[lowerBoundIndex(availableAges, age) - 1],
+      nearest: (age: number) => {
+        if (!availableAges.length) return age;
+        const index = lowerBoundIndex(availableAges, age);
+        const previous = availableAges[index - 1];
+        const next = availableAges[index];
+        if (previous === undefined) return next;
+        if (next === undefined) return previous;
+        return Math.abs(previous - age) <= Math.abs(next - age) ? previous : next;
+      }
+    }),
+    [availableAges]
   );
   const rangeSpan = Math.max(1, maxAge - minAge);
   const sliderAge = (age: number) =>
@@ -87,25 +126,24 @@ export function TimeControls({
     (direction: PlaybackDirection) => {
       if (!availableAges.length) return undefined;
       const center = timeSettings.centerAgeBp;
-      if (direction === "older") {
-        return availableAges.find((age) => age > center);
-      }
-      for (let index = availableAges.length - 1; index >= 0; index -= 1) {
-        if (availableAges[index] < center) return availableAges[index];
-      }
-      return undefined;
+      return direction === "older" ? ageLookup.nextOlder(center) : ageLookup.nextYounger(center);
     },
-    [availableAges, timeSettings.centerAgeBp]
+    [ageLookup, availableAges.length, timeSettings.centerAgeBp]
   );
 
   const stepTime = useCallback(
-    (direction: PlaybackDirection) => {
+    (direction: PlaybackDirection, options?: { lowPriority?: boolean }) => {
       const nextAge = getNextAge(direction);
       if (nextAge === undefined) return false;
-      setCenterAge(nextAge);
+      if (nextAge === timeSettings.centerAgeBp) return false;
+      if (options?.lowPriority) {
+        startPlaybackTransition(() => setCenterAge(nextAge));
+      } else {
+        setCenterAge(nextAge);
+      }
       return true;
     },
-    [getNextAge, setCenterAge]
+    [getNextAge, setCenterAge, startPlaybackTransition, timeSettings.centerAgeBp]
   );
 
   useEffect(() => {
@@ -114,22 +152,24 @@ export function TimeControls({
 
   useEffect(() => {
     if (!playing) return undefined;
-    const interval = globalThis.setInterval(() => {
-      const moved = stepTime(playbackDirection);
-      if (!moved) setPlaying(false);
+    let frameId: number | undefined;
+    const timeoutId = globalThis.setTimeout(() => {
+      frameId = globalThis.requestAnimationFrame(() => {
+        const moved = stepTime(playbackDirection, { lowPriority: true });
+        if (!moved) setPlaying(false);
+      });
     }, Math.max(150, playbackIntervalMs));
-    return () => globalThis.clearInterval(interval);
+    return () => {
+      globalThis.clearTimeout(timeoutId);
+      if (frameId !== undefined) globalThis.cancelAnimationFrame(frameId);
+    };
   }, [playbackDirection, playbackIntervalMs, playing, stepTime]);
 
   const canStepYounger = getNextAge("younger") !== undefined;
   const canStepOlder = getNextAge("older") !== undefined;
   const snapCenterAge = () => setCenterAge(timeSettings.centerAgeBp, { snap: true });
   const snapAge = (age: number) =>
-    availableAges.length
-      ? availableAges.reduce((best, candidate) =>
-          Math.abs(candidate - age) < Math.abs(best - age) ? candidate : best
-        )
-      : age;
+    ageLookup.nearest(age);
   const setRangeStart = (age: number) => {
     setTimeSettings((current) => ({
       ...current,

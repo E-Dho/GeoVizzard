@@ -110,9 +110,10 @@ export function MapView({
   const heatmapSamples =
     layerSettings.selectedDensityOnly && selectedSample ? [selectedSample] : samples;
   const displaySamples = layerSettings.selectedDensityOnly && selectedSample ? [selectedSample] : samples;
+  const isUtmMode = baseMap === "utm";
   const utmData = useMemo(
-    () => projectSamplesToUtm(displaySamples, selectedSample),
-    [displaySamples, selectedSample]
+    () => (isUtmMode ? projectSamplesToUtm(displaySamples, selectedSample) : undefined),
+    [displaySamples, isUtmMode, selectedSample]
   );
   const utmViewKey = utmData
     ? `${utmData.info.epsg}:${utmData.samples.length}:${utmData.viewState.target.join(",")}:${utmData.viewState.zoom}`
@@ -130,6 +131,7 @@ export function MapView({
   }, [utmData, utmViewKey]);
 
   useEffect(() => {
+    if (!isUtmMode || naturalEarthContext) return undefined;
     const controller = new AbortController();
     loadNaturalEarthContext(controller.signal)
       .then(setNaturalEarthContext)
@@ -139,7 +141,7 @@ export function MapView({
         }
       });
     return () => controller.abort();
-  }, []);
+  }, [isUtmMode, naturalEarthContext]);
 
   const handleViewStateChange = useCallback(({ viewState: next }: { viewState: unknown }) => {
     const nextViewState = next as MapViewState;
@@ -193,10 +195,10 @@ export function MapView({
   );
   const utmNaturalEarthLines = useMemo(
     () =>
-      utmData && naturalEarthContext
+      isUtmMode && utmData && naturalEarthContext
         ? projectNaturalEarthContextToUtm(naturalEarthContext, utmData.info, utmData.context.bounds)
         : [],
-    [naturalEarthContext, utmData]
+    [isUtmMode, naturalEarthContext, utmData]
   );
   const utmLayers = useMemo(
     () =>

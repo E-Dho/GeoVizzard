@@ -1,10 +1,52 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Camera } from "lucide-react";
 import { ControlPanel } from "./components/ControlPanel";
 import { Legend } from "./components/Legend";
 import { MapView } from "./components/MapView";
 import { SampleInspector } from "./components/SampleInspector";
 import { useAppState } from "./state/useAppState";
+
+const MAP_RENDER_THROTTLE_MS = 350;
+
+function useThrottledMapValue<T>(value: T, delayMs: number) {
+  const [throttledValue, setThrottledValue] = useState(value);
+  const latestValue = useRef(value);
+  const lastCommitAt = useRef(0);
+  const timeoutId = useRef<ReturnType<typeof globalThis.setTimeout>>();
+
+  useEffect(() => {
+    latestValue.current = value;
+    const now = globalThis.performance.now();
+    const remaining = delayMs - (now - lastCommitAt.current);
+
+    const commit = () => {
+      lastCommitAt.current = globalThis.performance.now();
+      timeoutId.current = undefined;
+      setThrottledValue(latestValue.current);
+    };
+
+    if (remaining <= 0) {
+      if (timeoutId.current !== undefined) {
+        globalThis.clearTimeout(timeoutId.current);
+        timeoutId.current = undefined;
+      }
+      commit();
+    } else if (timeoutId.current === undefined) {
+      timeoutId.current = globalThis.setTimeout(commit, remaining);
+    }
+  }, [delayMs, value]);
+
+  useEffect(
+    () => () => {
+      if (timeoutId.current !== undefined) {
+        globalThis.clearTimeout(timeoutId.current);
+      }
+    },
+    []
+  );
+
+  return throttledValue;
+}
 
 function exportMapPng() {
   const canvas = document.querySelector("canvas");
@@ -26,6 +68,8 @@ function exportMapPng() {
 
 export default function App() {
   const state = useAppState();
+  const mapSamples = useThrottledMapValue(state.filteredSamples, MAP_RENDER_THROTTLE_MS);
+  const mapLayerSettings = useThrottledMapValue(state.deferredLayerSettings, MAP_RENDER_THROTTLE_MS);
   const { setSelectedSampleId } = state;
   const selectSample = useCallback(
     (sample: { sample_id: string }) => setSelectedSampleId(sample.sample_id),
@@ -46,9 +90,9 @@ export default function App() {
       <ControlPanel {...state} />
       <div className="workspace">
         <MapView
-          samples={state.filteredSamples}
+          samples={mapSamples}
           selectedSample={state.selectedSample}
-          layerSettings={state.deferredLayerSettings}
+          layerSettings={mapLayerSettings}
           viewState={state.viewState}
           setViewState={state.setViewState}
           onSelectSample={selectSample}

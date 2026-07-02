@@ -1,3 +1,4 @@
+import { memo, useMemo } from "react";
 import { Download, FileJson, Upload } from "lucide-react";
 import { FilterPanel } from "./FilterPanel";
 import { LayerControls } from "./LayerControls";
@@ -8,9 +9,15 @@ import type { useAppState } from "../state/useAppState";
 
 type Props = ReturnType<typeof useAppState>;
 
-export function ControlPanel(state: Props) {
-  const hasSigma = state.samples.some((sample) => sample.sigma_final !== undefined);
-  const hasPotentialOutliers = state.samples.some((sample) => sample.potential_outlier);
+function ControlPanelComponent(state: Props) {
+  const hasSigma = useMemo(
+    () => state.samples.some((sample) => sample.sigma_final !== undefined),
+    [state.samples]
+  );
+  const hasPotentialOutliers = useMemo(
+    () => state.samples.some((sample) => sample.potential_outlier),
+    [state.samples]
+  );
   return (
     <aside className="control-panel">
       <section className="panel-section brand">
@@ -78,3 +85,5 @@ export function ControlPanel(state: Props) {
     </aside>
   );
 }
+
+export const ControlPanel = memo(ControlPanelComponent);

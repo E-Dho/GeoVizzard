@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { ReactNode } from "react";
 import type { ColorMode, LayerSettings } from "../state/useAppState";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
@@ -68,7 +69,7 @@ function CategoryChips({ values }: { values: string[] }) {
   );
 }
 
-function ModeLegend({
+const ModeLegend = memo(function ModeLegend({
   title,
   mode,
   samples,
@@ -117,9 +118,9 @@ function ModeLegend({
       )}
     </div>
   );
-}
+});
 
-export function Legend({ samples, allSamples, metadata, settings }: Props) {
+function LegendComponent({ samples, allSamples, metadata, settings }: Props) {
   const hasComparisonSamples = samples.some((sample) => sample.inComparisonWindow);
   return (
     <section className="legend">
@@ -167,3 +168,5 @@ export function Legend({ samples, allSamples, metadata, settings }: Props) {
     </section>
   );
 }
+
+export const Legend = memo(LegendComponent);

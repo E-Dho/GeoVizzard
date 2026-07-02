@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { LayerSettings } from "../state/useAppState";
 
 type Props = {
@@ -7,7 +8,7 @@ type Props = {
   hasPotentialOutliers: boolean;
 };
 
-function Toggle({
+const Toggle = memo(function Toggle({
   label,
   checked,
   onChange
@@ -22,9 +23,9 @@ function Toggle({
       {label}
     </label>
   );
-}
+});
 
-export function LayerControls({ settings, setSettings, hasSigma, hasPotentialOutliers }: Props) {
+function LayerControlsComponent({ settings, setSettings, hasSigma, hasPotentialOutliers }: Props) {
   const patch = (partial: Partial<LayerSettings>) =>
     setSettings((current) => ({ ...current, ...partial }));
 
@@ -130,3 +131,5 @@ export function LayerControls({ settings, setSettings, hasSigma, hasPotentialOut
     </section>
   );
 }
+
+export const LayerControls = memo(LayerControlsComponent);

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { LegendMapCorner, LegendPlacement, UiSettings } from "../state/useAppState";
 
 type Props = {
@@ -5,7 +6,7 @@ type Props = {
   setSettings: React.Dispatch<React.SetStateAction<UiSettings>>;
 };
 
-export function LayoutControls({ settings, setSettings }: Props) {
+function LayoutControlsComponent({ settings, setSettings }: Props) {
   const patch = (partial: Partial<UiSettings>) =>
     setSettings((current) => ({ ...current, ...partial }));
 
@@ -41,3 +42,5 @@ export function LayoutControls({ settings, setSettings }: Props) {
     </section>
   );
 }
+
+export const LayoutControls = memo(LayoutControlsComponent);
