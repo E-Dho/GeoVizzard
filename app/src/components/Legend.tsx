@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import type { ReactNode } from "react";
 import type { ColorMode, LayerSettings } from "../state/useAppState";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
@@ -24,6 +24,13 @@ function formatNumber(value: number) {
   if (Math.abs(value) >= 100) return value.toFixed(0);
   if (Math.abs(value) >= 10) return value.toFixed(1);
   return value.toFixed(2);
+}
+
+function categoryValues(
+  samples: SampleRecord[],
+  accessor: (sample: SampleRecord) => string | undefined
+) {
+  return Array.from(new Set(samples.map(accessor).filter((value): value is string => Boolean(value)))).sort();
 }
 
 function Swatch({ color }: { color: [number, number, number] }) {
@@ -90,6 +97,11 @@ const ModeLegend = memo(function ModeLegend({
   const ageRange = samples.length
     ? numericExtent(samples, (sample) => sample.age_bp)
     : { min: metadata.ageExtent[0], max: metadata.ageExtent[1] };
+  const visibleGroups = useMemo(() => categoryValues(samples, (sample) => sample.group), [samples]);
+  const visibleSequencingTypes = useMemo(
+    () => categoryValues(samples, (sample) => sample.sequencing_type),
+    [samples]
+  );
 
   return (
     <div className="legend-group">
@@ -98,13 +110,13 @@ const ModeLegend = memo(function ModeLegend({
       {mode === "group" && (
         <>
           <div className="legend-row">Colored by group</div>
-          <CategoryChips values={metadata.groups} />
+          <CategoryChips values={visibleGroups} />
         </>
       )}
       {mode === "sequencing_type" && (
         <>
           <div className="legend-row">Colored by sequencing type</div>
-          <CategoryChips values={metadata.sequencingTypes} />
+          <CategoryChips values={visibleSequencingTypes} />
         </>
       )}
       {mode === "age_bp" && ageRange && (
