@@ -295,6 +295,15 @@ label {
   font-size: 12px;
 }
 
+.source-name {
+  line-height: 1.35;
+  margin: 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
 .error {
   background: #fff1f2;
   border: 1px solid #fecdd3;

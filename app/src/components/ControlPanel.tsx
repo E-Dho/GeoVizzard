@@ -22,7 +22,7 @@ function ControlPanelComponent(state: Props) {
     <aside className="control-panel">
       <section className="panel-section brand">
         <h1>GeoVizzard</h1>
-        <p>{state.sourceName}</p>
+        <p className="source-name">{state.sourceName}</p>
         {state.error && <div className="error">{state.error}</div>}
         <label className="file-button">
           <Upload size={16} />
