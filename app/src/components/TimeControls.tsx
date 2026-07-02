@@ -38,6 +38,12 @@ export function TimeControls({
     [metadata.availableAges]
   );
   const rangeSpan = Math.max(1, maxAge - minAge);
+  const sliderAge = (age: number) =>
+    timeSettings.reverseTimeAxis ? minAge + maxAge - age : age;
+  const ageFromSlider = (age: number) =>
+    timeSettings.reverseTimeAxis ? minAge + maxAge - age : age;
+  const agePercent = (age: number) =>
+    ((sliderAge(age) - minAge) / rangeSpan) * 100;
   const lowerBound = clamp(
     Math.min(timeSettings.rangeStartAgeBp, timeSettings.rangeEndAgeBp),
     minAge,
@@ -58,13 +64,23 @@ export function TimeControls({
     minAge,
     maxAge
   );
+  const rangeStartPercent = Math.min(agePercent(lowerBound), agePercent(upperBound));
+  const rangeEndPercent = Math.max(agePercent(lowerBound), agePercent(upperBound));
+  const compareRangeStartPercent = Math.min(
+    agePercent(compareLowerBound),
+    agePercent(compareUpperBound)
+  );
+  const compareRangeEndPercent = Math.max(
+    agePercent(compareLowerBound),
+    agePercent(compareUpperBound)
+  );
   const rangeSliderStyle = {
-    "--range-start": `${((lowerBound - minAge) / rangeSpan) * 100}%`,
-    "--range-end": `${((upperBound - minAge) / rangeSpan) * 100}%`
+    "--range-start": `${rangeStartPercent}%`,
+    "--range-end": `${rangeEndPercent}%`
   } as CSSProperties;
   const compareRangeSliderStyle = {
-    "--range-start": `${((compareLowerBound - minAge) / rangeSpan) * 100}%`,
-    "--range-end": `${((compareUpperBound - minAge) / rangeSpan) * 100}%`
+    "--range-start": `${compareRangeStartPercent}%`,
+    "--range-end": `${compareRangeEndPercent}%`
   } as CSSProperties;
 
   const getNextAge = useCallback(
@@ -193,6 +209,20 @@ export function TimeControls({
           Manual range
         </button>
       </div>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={timeSettings.reverseTimeAxis}
+          onChange={(event) =>
+            setTimeSettings((current) => ({ ...current, reverseTimeAxis: event.target.checked }))
+          }
+        />
+        Older samples on left
+      </label>
+      <div className="time-axis-labels">
+        <span>{timeSettings.reverseTimeAxis ? "Older" : "Younger"}</span>
+        <span>{timeSettings.reverseTimeAxis ? "Younger" : "Older"}</span>
+      </div>
       {timeSettings.timeMode === "center" ? (
         <>
           <label>
@@ -201,8 +231,8 @@ export function TimeControls({
               type="range"
               min={minAge}
               max={maxAge}
-              value={timeSettings.centerAgeBp}
-              onChange={(event) => setCenterAge(Number(event.target.value))}
+              value={sliderAge(timeSettings.centerAgeBp)}
+              onChange={(event) => setCenterAge(ageFromSlider(Number(event.target.value)))}
               onKeyUp={snapCenterAge}
               onMouseUp={snapCenterAge}
               onTouchEnd={snapCenterAge}
@@ -232,9 +262,9 @@ export function TimeControls({
               type="range"
               min={minAge}
               max={maxAge}
-              value={lowerBound}
+              value={sliderAge(lowerBound)}
               aria-label="Lower time bound"
-              onChange={(event) => setRangeStart(Number(event.target.value))}
+              onChange={(event) => setRangeStart(ageFromSlider(Number(event.target.value)))}
               onKeyUp={snapRangeStart}
               onMouseUp={snapRangeStart}
               onTouchEnd={snapRangeStart}
@@ -244,9 +274,9 @@ export function TimeControls({
               type="range"
               min={minAge}
               max={maxAge}
-              value={upperBound}
+              value={sliderAge(upperBound)}
               aria-label="Upper time bound"
-              onChange={(event) => setRangeEnd(Number(event.target.value))}
+              onChange={(event) => setRangeEnd(ageFromSlider(Number(event.target.value)))}
               onKeyUp={snapRangeEnd}
               onMouseUp={snapRangeEnd}
               onTouchEnd={snapRangeEnd}
@@ -297,9 +327,9 @@ export function TimeControls({
                   type="range"
                   min={minAge}
                   max={maxAge}
-                  value={compareLowerBound}
+                  value={sliderAge(compareLowerBound)}
                   aria-label="Comparison lower time bound"
-                  onChange={(event) => setCompareRangeStart(Number(event.target.value))}
+                  onChange={(event) => setCompareRangeStart(ageFromSlider(Number(event.target.value)))}
                   onKeyUp={snapCompareRangeStart}
                   onMouseUp={snapCompareRangeStart}
                   onTouchEnd={snapCompareRangeStart}
@@ -309,9 +339,9 @@ export function TimeControls({
                   type="range"
                   min={minAge}
                   max={maxAge}
-                  value={compareUpperBound}
+                  value={sliderAge(compareUpperBound)}
                   aria-label="Comparison upper time bound"
-                  onChange={(event) => setCompareRangeEnd(Number(event.target.value))}
+                  onChange={(event) => setCompareRangeEnd(ageFromSlider(Number(event.target.value)))}
                   onKeyUp={snapCompareRangeEnd}
                   onMouseUp={snapCompareRangeEnd}
                   onTouchEnd={snapCompareRangeEnd}

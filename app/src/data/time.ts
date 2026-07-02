@@ -12,6 +12,7 @@ export type TimeSettings = {
   compareWindowEnabled: boolean;
   compareRangeStartAgeBp: number;
   compareRangeEndAgeBp: number;
+  reverseTimeAxis: boolean;
   snapToAvailableDates: boolean;
   temporalFadeEnabled: boolean;
   fadeOlderOnly: boolean;
@@ -31,6 +32,7 @@ export const defaultTimeSettings: TimeSettings = {
   compareWindowEnabled: false,
   compareRangeStartAgeBp: 3950,
   compareRangeEndAgeBp: 4450,
+  reverseTimeAxis: false,
   snapToAvailableDates: true,
   temporalFadeEnabled: true,
   fadeOlderOnly: true,

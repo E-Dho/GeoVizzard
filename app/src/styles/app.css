@@ -382,6 +382,14 @@ label {
   color: #6d28d9;
 }
 
+.time-axis-labels {
+  color: #64748b;
+  display: flex;
+  font-size: 11px;
+  justify-content: space-between;
+  margin-top: -3px;
+}
+
 .dual-range {
   height: 28px;
   margin: 2px 0;
