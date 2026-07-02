@@ -1,5 +1,5 @@
 import { CircleHelp } from "lucide-react";
-import { memo, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
 import type { Filters } from "../data/filters";
 
@@ -16,6 +16,68 @@ function numericValue(value: string) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : undefined;
 }
+
+function clipNumber(value: number | undefined, min?: number, max?: number) {
+  if (value === undefined) return undefined;
+  if (min !== undefined && value < min) return min;
+  if (max !== undefined && value > max) return max;
+  return value;
+}
+
+function formatDraftValue(value: number | undefined) {
+  return value === undefined ? "" : String(value);
+}
+
+const DraftNumberInput = memo(function DraftNumberInput({
+  value,
+  placeholder,
+  title,
+  clipMin,
+  clipMax,
+  emptyFallback,
+  onCommit
+}: {
+  value: number | undefined;
+  placeholder?: string;
+  title?: string;
+  clipMin?: number;
+  clipMax?: number;
+  emptyFallback?: number;
+  onCommit: (value: number | undefined) => void;
+}) {
+  const [draft, setDraft] = useState(formatDraftValue(value));
+
+  useEffect(() => {
+    setDraft(formatDraftValue(value));
+  }, [value]);
+
+  const commit = () => {
+    const parsed = numericValue(draft.trim()) ?? emptyFallback;
+    const clipped = clipNumber(parsed, clipMin, clipMax);
+    setDraft(formatDraftValue(clipped));
+    onCommit(clipped);
+  };
+
+  return (
+    <input
+      type="number"
+      value={draft}
+      placeholder={placeholder}
+      title={title}
+      onBlur={commit}
+      onChange={(event) => setDraft(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.currentTarget.blur();
+        }
+        if (event.key === "Escape") {
+          setDraft(formatDraftValue(value));
+          event.currentTarget.blur();
+        }
+      }}
+    />
+  );
+});
 
 const TOOLTIP_WIDTH = 230;
 const TOOLTIP_MARGIN = 12;
@@ -169,22 +231,24 @@ const NumericFilter = memo(function NumericFilter({
       <div className="two-col">
         <label>
           Min
-          <input
-            type="number"
-            value={min ?? ""}
+          <DraftNumberInput
+            value={min}
             placeholder={range ? String(Number(range.min.toFixed(3))) : ""}
             title={hint}
-            onChange={(event) => onMin(numericValue(event.target.value))}
+            clipMin={range?.min}
+            clipMax={range?.max}
+            onCommit={onMin}
           />
         </label>
         <label>
           Max
-          <input
-            type="number"
-            value={max ?? ""}
+          <DraftNumberInput
+            value={max}
             placeholder={range ? String(Number(range.max.toFixed(3))) : ""}
             title={hint}
-            onChange={(event) => onMax(numericValue(event.target.value))}
+            clipMin={range?.min}
+            clipMax={range?.max}
+            onCommit={onMax}
           />
         </label>
       </div>
@@ -292,28 +356,52 @@ function FilterPanelComponent({ filters, setFilters, metadata, filteredSamples, 
             <span>Min lon</span>
             <FilterHelp text="Western edge of the coordinate bounding box." />
           </span>
-          <input type="number" value={filters.bbox.minLon} onChange={(e) => patchBbox({ minLon: Number(e.target.value) })} />
+          <DraftNumberInput
+            value={filters.bbox.minLon}
+            clipMin={-180}
+            clipMax={180}
+            emptyFallback={filters.bbox.minLon}
+            onCommit={(minLon) => minLon !== undefined && patchBbox({ minLon })}
+          />
         </label>
         <label>
           <span className="filter-label">
             <span>Max lon</span>
             <FilterHelp text="Eastern edge of the coordinate bounding box." />
           </span>
-          <input type="number" value={filters.bbox.maxLon} onChange={(e) => patchBbox({ maxLon: Number(e.target.value) })} />
+          <DraftNumberInput
+            value={filters.bbox.maxLon}
+            clipMin={-180}
+            clipMax={180}
+            emptyFallback={filters.bbox.maxLon}
+            onCommit={(maxLon) => maxLon !== undefined && patchBbox({ maxLon })}
+          />
         </label>
         <label>
           <span className="filter-label">
             <span>Min lat</span>
             <FilterHelp text="Southern edge of the coordinate bounding box." />
           </span>
-          <input type="number" value={filters.bbox.minLat} onChange={(e) => patchBbox({ minLat: Number(e.target.value) })} />
+          <DraftNumberInput
+            value={filters.bbox.minLat}
+            clipMin={-90}
+            clipMax={90}
+            emptyFallback={filters.bbox.minLat}
+            onCommit={(minLat) => minLat !== undefined && patchBbox({ minLat })}
+          />
         </label>
         <label>
           <span className="filter-label">
             <span>Max lat</span>
             <FilterHelp text="Northern edge of the coordinate bounding box." />
           </span>
-          <input type="number" value={filters.bbox.maxLat} onChange={(e) => patchBbox({ maxLat: Number(e.target.value) })} />
+          <DraftNumberInput
+            value={filters.bbox.maxLat}
+            clipMin={-90}
+            clipMax={90}
+            emptyFallback={filters.bbox.maxLat}
+            onCommit={(maxLat) => maxLat !== undefined && patchBbox({ maxLat })}
+          />
         </label>
       </div>
       <label>

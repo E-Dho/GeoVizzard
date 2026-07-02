@@ -102,7 +102,7 @@ export const defaultViewState: MapViewState = {
 };
 
 export const defaultUiSettings: UiSettings = {
-  legendPlacement: "left",
+  legendPlacement: "right-top",
   legendMapCorner: "bottom-left"
 };
 

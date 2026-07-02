@@ -1,4 +1,4 @@
-import { type CSSProperties, useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { memo, type CSSProperties, useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { Play, SkipBack, SkipForward, Square } from "lucide-react";
 import type { DatasetMetadata } from "../data/schema";
 import type { TimeSettings } from "../data/time";
@@ -40,6 +40,61 @@ function upperBoundIndex(values: number[], target: number) {
   }
   return low;
 }
+
+function parseDraftNumber(value: string) {
+  if (value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function formatDraftNumber(value: number | undefined) {
+  return value === undefined ? "" : String(value);
+}
+
+const DraftNumberInput = memo(function DraftNumberInput({
+  value,
+  clipMin,
+  clipMax,
+  fallbackValue,
+  onCommit
+}: {
+  value: number;
+  clipMin: number;
+  clipMax: number;
+  fallbackValue: number;
+  onCommit: (value: number) => void;
+}) {
+  const [draft, setDraft] = useState(formatDraftNumber(value));
+
+  useEffect(() => {
+    setDraft(formatDraftNumber(value));
+  }, [value]);
+
+  const commit = useCallback(() => {
+    const parsed = parseDraftNumber(draft);
+    const clipped = clamp(parsed ?? fallbackValue, clipMin, clipMax);
+    setDraft(formatDraftNumber(clipped));
+    onCommit(clipped);
+  }, [clipMax, clipMin, draft, fallbackValue, onCommit]);
+
+  return (
+    <input
+      type="number"
+      value={draft}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") {
+          event.currentTarget.blur();
+        }
+        if (event.key === "Escape") {
+          setDraft(formatDraftNumber(value));
+          event.currentTarget.blur();
+        }
+      }}
+    />
+  );
+});
 
 export function TimeControls({
   metadata,
@@ -170,6 +225,10 @@ export function TimeControls({
   const snapCenterAge = () => setCenterAge(timeSettings.centerAgeBp, { snap: true });
   const snapAge = (age: number) =>
     ageLookup.nearest(age);
+  const commitTimeInputAge = useCallback(
+    (age: number) => (timeSettings.snapToAvailableDates ? snapAge(age) : age),
+    [snapAge, timeSettings.snapToAvailableDates]
+  );
   const setRangeStart = (age: number) => {
     setTimeSettings((current) => ({
       ...current,
@@ -325,20 +384,22 @@ export function TimeControls({
           <div className="two-col">
             <label>
               Lower bound
-              <input
-                type="number"
+              <DraftNumberInput
                 value={Math.round(lowerBound)}
-                onChange={(event) => setRangeStart(Number(event.target.value))}
-                onBlur={snapRangeStart}
+                clipMin={minAge}
+                clipMax={maxAge}
+                fallbackValue={lowerBound}
+                onCommit={(age) => setRangeStart(commitTimeInputAge(age))}
               />
             </label>
             <label>
               Upper bound
-              <input
-                type="number"
+              <DraftNumberInput
                 value={Math.round(upperBound)}
-                onChange={(event) => setRangeEnd(Number(event.target.value))}
-                onBlur={snapRangeEnd}
+                clipMin={minAge}
+                clipMax={maxAge}
+                fallbackValue={upperBound}
+                onCommit={(age) => setRangeEnd(commitTimeInputAge(age))}
               />
             </label>
           </div>
@@ -390,20 +451,22 @@ export function TimeControls({
               <div className="two-col">
                 <label>
                   Compare lower
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={Math.round(compareLowerBound)}
-                    onChange={(event) => setCompareRangeStart(Number(event.target.value))}
-                    onBlur={snapCompareRangeStart}
+                    clipMin={minAge}
+                    clipMax={maxAge}
+                    fallbackValue={compareLowerBound}
+                    onCommit={(age) => setCompareRangeStart(commitTimeInputAge(age))}
                   />
                 </label>
                 <label>
                   Compare upper
-                  <input
-                    type="number"
+                  <DraftNumberInput
                     value={Math.round(compareUpperBound)}
-                    onChange={(event) => setCompareRangeEnd(Number(event.target.value))}
-                    onBlur={snapCompareRangeEnd}
+                    clipMin={minAge}
+                    clipMax={maxAge}
+                    fallbackValue={compareUpperBound}
+                    onCommit={(age) => setCompareRangeEnd(commitTimeInputAge(age))}
                   />
                 </label>
               </div>
