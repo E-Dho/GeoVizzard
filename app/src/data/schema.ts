@@ -55,6 +55,7 @@ export type SampleRecord = {
   neighbors?: NeighborInfo[];
   temporalAlpha: number;
   inPrimaryWindow: boolean;
+  inComparisonWindow: boolean;
 };
 
 export type DatasetMetadata = {

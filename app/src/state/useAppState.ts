@@ -136,12 +136,22 @@ export function useAppState() {
         Math.max(current.rangeEndAgeBp ?? extent[1], extent[0]),
         extent[1]
       );
+      const compareRangeStartAgeBp = Math.min(
+        Math.max(current.compareRangeStartAgeBp ?? extent[0], extent[0]),
+        extent[1]
+      );
+      const compareRangeEndAgeBp = Math.min(
+        Math.max(current.compareRangeEndAgeBp ?? extent[1], extent[0]),
+        extent[1]
+      );
       return {
         ...defaultTimeSettings,
         ...current,
         centerAgeBp,
         rangeStartAgeBp: Math.min(rangeStartAgeBp, rangeEndAgeBp),
         rangeEndAgeBp: Math.max(rangeStartAgeBp, rangeEndAgeBp),
+        compareRangeStartAgeBp: Math.min(compareRangeStartAgeBp, compareRangeEndAgeBp),
+        compareRangeEndAgeBp: Math.max(compareRangeStartAgeBp, compareRangeEndAgeBp),
         windowWidthYears: Math.min(
           Math.max(100, current.windowWidthYears),
           Math.max(100, extent[1] - extent[0])
@@ -196,6 +206,7 @@ export function useAppState() {
   );
 
   const primaryWindowCount = filteredSamples.filter((sample) => sample.inPrimaryWindow).length;
+  const comparisonWindowCount = filteredSamples.filter((sample) => sample.inComparisonWindow).length;
   const selectedSample = samples.find((sample) => sample.sample_id === selectedSampleId);
   const window = visibleWindow(deferredTimeSettings, metadata.ageExtent);
 
@@ -264,6 +275,7 @@ export function useAppState() {
     setSelectedSampleId,
     filteredSamples,
     primaryWindowCount,
+    comparisonWindowCount,
     window,
     error,
     setError,

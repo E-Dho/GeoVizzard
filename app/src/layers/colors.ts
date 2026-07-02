@@ -4,6 +4,7 @@ import type { SampleRecord } from "../data/schema";
 export const TRUE_COLOR: [number, number, number] = [41, 121, 255];
 export const PRED_COLOR: [number, number, number] = [232, 92, 63];
 export const SELECTED_COLOR: [number, number, number] = [255, 214, 10];
+export const COMPARISON_COLOR: [number, number, number] = [139, 92, 246];
 
 export const palette: [number, number, number][] = [
   [41, 121, 255],
@@ -56,7 +57,9 @@ export function colorForSample(
   colorExtent = extentForColorMode(mode, samples)
 ) {
   let rgb = fallback;
-  if (mode === "error_km") {
+  if (sample.inComparisonWindow) {
+    rgb = COMPARISON_COLOR;
+  } else if (mode === "error_km") {
     const [min, max] = colorExtent ?? [0, 1];
     rgb = ramp(sample.error_km, min, max);
   } else if (mode === "alpha_precision") {

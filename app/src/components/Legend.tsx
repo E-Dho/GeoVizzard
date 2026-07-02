@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import type { ColorMode, LayerSettings } from "../state/useAppState";
 import type { DatasetMetadata, SampleRecord } from "../data/schema";
-import { categoryColor, PRED_COLOR, TRUE_COLOR } from "../layers/colors";
+import { categoryColor, COMPARISON_COLOR, PRED_COLOR, TRUE_COLOR } from "../layers/colors";
 
 type Props = {
   samples: SampleRecord[];
@@ -120,9 +120,16 @@ function ModeLegend({
 }
 
 export function Legend({ samples, allSamples, metadata, settings }: Props) {
+  const hasComparisonSamples = samples.some((sample) => sample.inComparisonWindow);
   return (
     <section className="legend">
       <h2>Legend</h2>
+      {hasComparisonSamples && (
+        <div className="legend-row">
+          <Swatch color={COMPARISON_COLOR} />
+          Comparison window samples
+        </div>
+      )}
       <ModeLegend
         title="Points"
         mode={settings.pointColorMode}

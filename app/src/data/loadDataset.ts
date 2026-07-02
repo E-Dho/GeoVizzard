@@ -146,7 +146,8 @@ function normalizeRows(rows: RawRow[], mapping: SchemaMapping): SampleRecord[] {
         pred_lon: predLon,
         age_bp: ageBp,
         temporalAlpha: 1,
-        inPrimaryWindow: true
+        inPrimaryWindow: true,
+        inComparisonWindow: false
       };
       const optionalValues: Partial<SampleRecord> = {
         error_km: numberValue(row, mapping.error_km),

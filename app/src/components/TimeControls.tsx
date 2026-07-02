@@ -12,6 +12,7 @@ type Props = {
   setCenterAge: (age: number, options?: { snap?: boolean }) => void;
   window: { start: number; end: number };
   primaryWindowCount: number;
+  comparisonWindowCount: number;
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -24,7 +25,8 @@ export function TimeControls({
   setTimeSettings,
   setCenterAge,
   window,
-  primaryWindowCount
+  primaryWindowCount,
+  comparisonWindowCount
 }: Props) {
   const [showPlayback, setShowPlayback] = useState(false);
   const [playing, setPlaying] = useState(false);
@@ -46,9 +48,23 @@ export function TimeControls({
     minAge,
     maxAge
   );
+  const compareLowerBound = clamp(
+    Math.min(timeSettings.compareRangeStartAgeBp, timeSettings.compareRangeEndAgeBp),
+    minAge,
+    maxAge
+  );
+  const compareUpperBound = clamp(
+    Math.max(timeSettings.compareRangeStartAgeBp, timeSettings.compareRangeEndAgeBp),
+    minAge,
+    maxAge
+  );
   const rangeSliderStyle = {
     "--range-start": `${((lowerBound - minAge) / rangeSpan) * 100}%`,
     "--range-end": `${((upperBound - minAge) / rangeSpan) * 100}%`
+  } as CSSProperties;
+  const compareRangeSliderStyle = {
+    "--range-start": `${((compareLowerBound - minAge) / rangeSpan) * 100}%`,
+    "--range-end": `${((compareUpperBound - minAge) / rangeSpan) * 100}%`
   } as CSSProperties;
 
   const getNextAge = useCallback(
@@ -92,6 +108,12 @@ export function TimeControls({
   const canStepYounger = getNextAge("younger") !== undefined;
   const canStepOlder = getNextAge("older") !== undefined;
   const snapCenterAge = () => setCenterAge(timeSettings.centerAgeBp, { snap: true });
+  const snapAge = (age: number) =>
+    availableAges.length
+      ? availableAges.reduce((best, candidate) =>
+          Math.abs(candidate - age) < Math.abs(best - age) ? candidate : best
+        )
+      : age;
   const setRangeStart = (age: number) => {
     setTimeSettings((current) => ({
       ...current,
@@ -104,29 +126,33 @@ export function TimeControls({
       rangeEndAgeBp: Math.max(age, current.rangeStartAgeBp)
     }));
   };
+  const setCompareRangeStart = (age: number) => {
+    setTimeSettings((current) => ({
+      ...current,
+      compareRangeStartAgeBp: Math.min(age, current.compareRangeEndAgeBp)
+    }));
+  };
+  const setCompareRangeEnd = (age: number) => {
+    setTimeSettings((current) => ({
+      ...current,
+      compareRangeEndAgeBp: Math.max(age, current.compareRangeStartAgeBp)
+    }));
+  };
   const snapRangeStart = () => {
     if (!timeSettings.snapToAvailableDates) return;
-    const snapped = availableAges.length
-      ? availableAges.reduce((best, candidate) =>
-          Math.abs(candidate - timeSettings.rangeStartAgeBp) <
-          Math.abs(best - timeSettings.rangeStartAgeBp)
-            ? candidate
-            : best
-        )
-      : timeSettings.rangeStartAgeBp;
-    setRangeStart(snapped);
+    setRangeStart(snapAge(timeSettings.rangeStartAgeBp));
   };
   const snapRangeEnd = () => {
     if (!timeSettings.snapToAvailableDates) return;
-    const snapped = availableAges.length
-      ? availableAges.reduce((best, candidate) =>
-          Math.abs(candidate - timeSettings.rangeEndAgeBp) <
-          Math.abs(best - timeSettings.rangeEndAgeBp)
-            ? candidate
-            : best
-        )
-      : timeSettings.rangeEndAgeBp;
-    setRangeEnd(snapped);
+    setRangeEnd(snapAge(timeSettings.rangeEndAgeBp));
+  };
+  const snapCompareRangeStart = () => {
+    if (!timeSettings.snapToAvailableDates) return;
+    setCompareRangeStart(snapAge(timeSettings.compareRangeStartAgeBp));
+  };
+  const snapCompareRangeEnd = () => {
+    if (!timeSettings.snapToAvailableDates) return;
+    setCompareRangeEnd(snapAge(timeSettings.compareRangeEndAgeBp));
   };
 
   return (
@@ -141,12 +167,21 @@ export function TimeControls({
         )}
         <span>Visible: {Math.round(window.start)}-{Math.round(window.end)} BP</span>
         <span>Samples: {primaryWindowCount}</span>
+        {timeSettings.compareWindowEnabled && (
+          <span>Compare: {comparisonWindowCount}</span>
+        )}
       </div>
       <div className="segmented-control" role="group" aria-label="Time slider mode">
         <button
           type="button"
           className={timeSettings.timeMode === "center" ? "active" : ""}
-          onClick={() => setTimeSettings((current) => ({ ...current, timeMode: "center" }))}
+          onClick={() =>
+            setTimeSettings((current) => ({
+              ...current,
+              timeMode: "center",
+              compareWindowEnabled: false
+            }))
+          }
         >
           Center
         </button>
@@ -237,6 +272,73 @@ export function TimeControls({
               />
             </label>
           </div>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={timeSettings.compareWindowEnabled}
+              onChange={(event) =>
+                setTimeSettings((current) => ({
+                  ...current,
+                  compareWindowEnabled: event.target.checked
+                }))
+              }
+            />
+            Compare second window
+          </label>
+          {timeSettings.compareWindowEnabled && (
+            <div className="comparison-range-control">
+              <div className="range-readout comparison">
+                <span>Compare lower: {Math.round(compareLowerBound)} BP</span>
+                <span>Upper: {Math.round(compareUpperBound)} BP</span>
+              </div>
+              <div className="dual-range comparison" style={compareRangeSliderStyle}>
+                <input
+                  className="lower"
+                  type="range"
+                  min={minAge}
+                  max={maxAge}
+                  value={compareLowerBound}
+                  aria-label="Comparison lower time bound"
+                  onChange={(event) => setCompareRangeStart(Number(event.target.value))}
+                  onKeyUp={snapCompareRangeStart}
+                  onMouseUp={snapCompareRangeStart}
+                  onTouchEnd={snapCompareRangeStart}
+                />
+                <input
+                  className="upper"
+                  type="range"
+                  min={minAge}
+                  max={maxAge}
+                  value={compareUpperBound}
+                  aria-label="Comparison upper time bound"
+                  onChange={(event) => setCompareRangeEnd(Number(event.target.value))}
+                  onKeyUp={snapCompareRangeEnd}
+                  onMouseUp={snapCompareRangeEnd}
+                  onTouchEnd={snapCompareRangeEnd}
+                />
+              </div>
+              <div className="two-col">
+                <label>
+                  Compare lower
+                  <input
+                    type="number"
+                    value={Math.round(compareLowerBound)}
+                    onChange={(event) => setCompareRangeStart(Number(event.target.value))}
+                    onBlur={snapCompareRangeStart}
+                  />
+                </label>
+                <label>
+                  Compare upper
+                  <input
+                    type="number"
+                    value={Math.round(compareUpperBound)}
+                    onChange={(event) => setCompareRangeEnd(Number(event.target.value))}
+                    onBlur={snapCompareRangeEnd}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
         </div>
       )}
       <label className="check">

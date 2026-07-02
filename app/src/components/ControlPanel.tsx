@@ -49,6 +49,7 @@ export function ControlPanel(state: Props) {
         setCenterAge={state.setCenterAge}
         window={state.window}
         primaryWindowCount={state.primaryWindowCount}
+        comparisonWindowCount={state.comparisonWindowCount}
       />
       <FilterPanel
         filters={state.filters}

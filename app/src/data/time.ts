@@ -9,6 +9,9 @@ export type TimeSettings = {
   windowWidthYears: number;
   rangeStartAgeBp: number;
   rangeEndAgeBp: number;
+  compareWindowEnabled: boolean;
+  compareRangeStartAgeBp: number;
+  compareRangeEndAgeBp: number;
   snapToAvailableDates: boolean;
   temporalFadeEnabled: boolean;
   fadeOlderOnly: boolean;
@@ -25,6 +28,9 @@ export const defaultTimeSettings: TimeSettings = {
   windowWidthYears: 500,
   rangeStartAgeBp: 2950,
   rangeEndAgeBp: 3450,
+  compareWindowEnabled: false,
+  compareRangeStartAgeBp: 3950,
+  compareRangeEndAgeBp: 4450,
   snapToAvailableDates: true,
   temporalFadeEnabled: true,
   fadeOlderOnly: true,
@@ -62,6 +68,15 @@ export function visibleWindow(settings: TimeSettings, ageExtent: [number, number
   };
 }
 
+export function comparisonWindow(settings: TimeSettings, ageExtent: [number, number]) {
+  const start = Math.min(settings.compareRangeStartAgeBp, settings.compareRangeEndAgeBp);
+  const end = Math.max(settings.compareRangeStartAgeBp, settings.compareRangeEndAgeBp);
+  return {
+    start: clamp(start, ageExtent[0], ageExtent[1]),
+    end: clamp(end, ageExtent[0], ageExtent[1])
+  };
+}
+
 function interpolateAlpha(settings: TimeSettings, t: number) {
   const clamped = clamp(t, 0, 1);
   if (settings.fadeCurve === "step") {
@@ -82,28 +97,54 @@ function interpolateAlpha(settings: TimeSettings, t: number) {
 
 export function temporalAlpha(ageBp: number, settings: TimeSettings, ageExtent: [number, number]) {
   const { start, end } = visibleWindow(settings, ageExtent);
+  const compare = settings.compareWindowEnabled ? comparisonWindow(settings, ageExtent) : undefined;
   const inside = ageBp >= start && ageBp <= end;
+  const insideComparison =
+    compare !== undefined && ageBp >= compare.start && ageBp <= compare.end && !inside;
   if (!settings.temporalFadeEnabled) {
-    return { alpha: inside ? settings.currentWindowAlpha : 0, inPrimaryWindow: inside };
+    return {
+      alpha: inside || insideComparison ? settings.currentWindowAlpha : 0,
+      inPrimaryWindow: inside,
+      inComparisonWindow: insideComparison
+    };
   }
-  if (inside) return { alpha: settings.currentWindowAlpha, inPrimaryWindow: true };
+  if (inside) {
+    return {
+      alpha: settings.currentWindowAlpha,
+      inPrimaryWindow: true,
+      inComparisonWindow: false
+    };
+  }
+  if (insideComparison) {
+    return {
+      alpha: settings.currentWindowAlpha,
+      inPrimaryWindow: false,
+      inComparisonWindow: true
+    };
+  }
 
   if (settings.fadeOlderOnly) {
-    if (ageBp < start) return { alpha: 0, inPrimaryWindow: false };
-    if (ageBp > end + settings.fadeLookbackYears) return { alpha: 0, inPrimaryWindow: false };
+    if (ageBp < start) {
+      return { alpha: 0, inPrimaryWindow: false, inComparisonWindow: false };
+    }
+    if (ageBp > end + settings.fadeLookbackYears) {
+      return { alpha: 0, inPrimaryWindow: false, inComparisonWindow: false };
+    }
     return {
       alpha: interpolateAlpha(settings, (ageBp - end) / settings.fadeLookbackYears),
-      inPrimaryWindow: false
+      inPrimaryWindow: false,
+      inComparisonWindow: false
     };
   }
 
   const distanceOutside = ageBp < start ? start - ageBp : ageBp - end;
   if (distanceOutside > settings.fadeLookbackYears) {
-    return { alpha: 0, inPrimaryWindow: false };
+    return { alpha: 0, inPrimaryWindow: false, inComparisonWindow: false };
   }
   return {
     alpha: interpolateAlpha(settings, distanceOutside / settings.fadeLookbackYears),
-    inPrimaryWindow: false
+    inPrimaryWindow: false,
+    inComparisonWindow: false
   };
 }
 
@@ -115,7 +156,12 @@ export function applyTemporalAlpha(
   return samples
     .map((sample) => {
       const result = temporalAlpha(sample.age_bp, settings, ageExtent);
-      return { ...sample, temporalAlpha: result.alpha, inPrimaryWindow: result.inPrimaryWindow };
+      return {
+        ...sample,
+        temporalAlpha: result.alpha,
+        inPrimaryWindow: result.inPrimaryWindow,
+        inComparisonWindow: result.inComparisonWindow
+      };
     })
     .filter((sample) => sample.temporalAlpha > 0);
 }
