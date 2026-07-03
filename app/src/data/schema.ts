@@ -9,6 +9,7 @@ export type ColumnKey =
   | "sigma_final"
   | "alpha_precision"
   | "group"
+  | "original_group"
   | "sequencing_type"
   | "locality_id"
   | "mu_knn_lat"
@@ -43,6 +44,7 @@ export type SampleRecord = {
   sigma_final?: number;
   alpha_precision?: number;
   group?: string;
+  original_group?: string;
   sequencing_type?: string;
   locality_id?: string;
   mu_knn_lat?: number;
@@ -93,6 +95,7 @@ export const defaultSchemaMapping: SchemaMapping = {
   sigma_final: "sigma_final",
   alpha_precision: "alpha_precision",
   group: "group",
+  original_group: "original_group",
   sequencing_type: "sequencing_type",
   locality_id: "locality_id",
   mu_knn_lat: "mu_knn_lat",

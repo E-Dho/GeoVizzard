@@ -336,6 +336,10 @@ label {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.button-row.two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .playback-controls {
   background: #eef6f6;
   border: 1px solid #c7dddd;
@@ -633,6 +637,119 @@ select[multiple] {
 
 .checkbox-list .check:hover {
   background: #eef2f7;
+}
+
+.exploration-panel {
+  gap: 12px;
+}
+
+.exploration-title {
+  align-items: start;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.exploration-title h2,
+.exploration-title p {
+  margin: 0;
+}
+
+.exploration-title button {
+  flex: 0 0 auto;
+}
+
+.materialized-list {
+  border: 1px solid #d9e2ec;
+  border-radius: 6px;
+  display: grid;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.materialized-row {
+  align-items: center;
+  border-bottom: 1px solid #e2e8f0;
+  display: grid;
+  gap: 7px;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  padding: 6px;
+}
+
+.materialized-row:last-child {
+  border-bottom: 0;
+}
+
+.materialized-row.selected {
+  background: #fff7d6;
+}
+
+.materialized-select {
+  align-items: start;
+  background: transparent;
+  border: 0;
+  color: #172033;
+  display: grid;
+  gap: 2px;
+  justify-content: stretch;
+  min-height: 0;
+  min-width: 0;
+  padding: 3px 4px;
+  text-align: left;
+}
+
+.materialized-select:hover {
+  background: #eef2f7;
+}
+
+.materialized-select:disabled {
+  background: transparent;
+  color: #94a3b8;
+}
+
+.materialized-select strong {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.materialized-select span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.mini-check {
+  align-items: center;
+  color: #475569;
+  display: flex;
+  font-size: 11px;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.mini-check input {
+  min-height: 0;
+}
+
+.same-group-control {
+  align-items: center;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  border-radius: 6px;
+  display: grid;
+  gap: 8px;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 8px;
+}
+
+.same-group-control button {
+  min-height: 30px;
+  padding: 5px 8px;
+}
+
+.same-group-control span {
+  color: #4338ca;
+  font-size: 12px;
+  overflow-wrap: anywhere;
 }
 
 .inspector-title {

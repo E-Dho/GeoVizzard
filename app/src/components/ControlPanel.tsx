@@ -5,6 +5,7 @@ import { LayerControls } from "./LayerControls";
 import { LayoutControls } from "./LayoutControls";
 import { TimeControls } from "./TimeControls";
 import { Legend } from "./Legend";
+import { ExplorationPanel } from "./ExplorationPanel";
 import type { useAppState } from "../state/useAppState";
 
 type Props = ReturnType<typeof useAppState>;
@@ -51,36 +52,42 @@ function ControlPanelComponent(state: Props) {
           </label>
         </div>
       </section>
-      <TimeControls
-        metadata={state.metadata}
-        timeSettings={state.timeSettings}
-        setTimeSettings={state.setTimeSettings}
-        setCenterAge={state.setCenterAge}
-        window={state.window}
-        primaryWindowCount={state.primaryWindowCount}
-        comparisonWindowCount={state.comparisonWindowCount}
-      />
-      <FilterPanel
-        filters={state.filters}
-        setFilters={state.setFilters}
-        metadata={state.metadata}
-        filteredSamples={state.filteredSamples}
-        allSamples={state.samples}
-      />
-      <LayerControls
-        settings={state.layerSettings}
-        setSettings={state.setLayerSettings}
-        hasSigma={hasSigma}
-        hasPotentialOutliers={hasPotentialOutliers}
-      />
-      <LayoutControls settings={state.uiSettings} setSettings={state.setUiSettings} />
-      {state.uiSettings.legendPlacement === "left" && (
-        <Legend
-          samples={state.filteredSamples}
-          allSamples={state.samples}
-          metadata={state.metadata}
-          settings={state.deferredLayerSettings}
-        />
+      {state.filters.selectedOnly && state.selectedSample ? (
+        <ExplorationPanel {...state} />
+      ) : (
+        <>
+          <TimeControls
+            metadata={state.metadata}
+            timeSettings={state.timeSettings}
+            setTimeSettings={state.setTimeSettings}
+            setCenterAge={state.setCenterAge}
+            window={state.window}
+            primaryWindowCount={state.primaryWindowCount}
+            comparisonWindowCount={state.comparisonWindowCount}
+          />
+          <FilterPanel
+            filters={state.filters}
+            setFilters={state.setFilters}
+            metadata={state.metadata}
+            filteredSamples={state.filteredSamples}
+            allSamples={state.samples}
+          />
+          <LayerControls
+            settings={state.layerSettings}
+            setSettings={state.setLayerSettings}
+            hasSigma={hasSigma}
+            hasPotentialOutliers={hasPotentialOutliers}
+          />
+          <LayoutControls settings={state.uiSettings} setSettings={state.setUiSettings} />
+          {state.uiSettings.legendPlacement === "left" && (
+            <Legend
+              samples={state.filteredSamples}
+              allSamples={state.samples}
+              metadata={state.metadata}
+              settings={state.deferredLayerSettings}
+            />
+          )}
+        </>
       )}
     </aside>
   );

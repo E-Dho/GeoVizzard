@@ -154,6 +154,7 @@ function normalizeRows(rows: RawRow[], mapping: SchemaMapping): SampleRecord[] {
         sigma_final: numberValue(row, mapping.sigma_final),
         alpha_precision: numberValue(row, mapping.alpha_precision),
         group: stringValue(row, mapping.group),
+        original_group: stringValue(row, mapping.original_group),
         sequencing_type: stringValue(row, mapping.sequencing_type),
         locality_id: stringValue(row, mapping.locality_id),
         mu_knn_lat: numberValue(row, mapping.mu_knn_lat),

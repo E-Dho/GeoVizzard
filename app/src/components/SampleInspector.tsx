@@ -1,9 +1,11 @@
+import { useMemo } from "react";
 import { Crosshair, LocateFixed, UsersRound, X } from "lucide-react";
 import type { SampleRecord } from "../data/schema";
 import type { MapViewState } from "../state/useAppState";
 
 type Props = {
   sample?: SampleRecord;
+  allSamples: SampleRecord[];
   selectedOnly: boolean;
   clearSelection: () => void;
   setViewState: React.Dispatch<React.SetStateAction<MapViewState>> | ((viewState: MapViewState) => void);
@@ -22,11 +24,17 @@ function Field({ label, value }: { label: string; value: unknown }) {
 
 export function SampleInspector({
   sample,
+  allSamples,
   selectedOnly,
   clearSelection,
   setViewState,
   setSelectedOnly
 }: Props) {
+  const sampleById = useMemo(() => {
+    if (!sample) return new Map<string, SampleRecord>();
+    return new Map(allSamples.map((record) => [record.sample_id, record]));
+  }, [allSamples, sample]);
+
   if (!sample) {
     return (
       <aside className="inspector empty">
@@ -91,20 +99,21 @@ export function SampleInspector({
             <thead>
               <tr>
                 <th>ID</th>
-                <th>Lat</th>
-                <th>Lon</th>
-                <th>Dist</th>
+                <th>Age BP</th>
+                <th>Latent dist</th>
               </tr>
             </thead>
             <tbody>
-              {sample.neighbors.map((neighbor) => (
-                <tr key={neighbor.id}>
-                  <td>{neighbor.id}</td>
-                  <td>{neighbor.lat?.toFixed(2) ?? ""}</td>
-                  <td>{neighbor.lon?.toFixed(2) ?? ""}</td>
-                  <td>{neighbor.distance?.toFixed(1) ?? ""}</td>
-                </tr>
-              ))}
+              {sample.neighbors.map((neighbor) => {
+                const neighborSample = sampleById.get(neighbor.id);
+                return (
+                  <tr key={neighbor.id}>
+                    <td>{neighbor.id}</td>
+                    <td>{neighborSample?.age_bp ?? ""}</td>
+                    <td>{neighbor.distance?.toFixed(1) ?? ""}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         ) : (

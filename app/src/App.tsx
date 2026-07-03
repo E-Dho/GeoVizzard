@@ -5,8 +5,11 @@ import { Legend } from "./components/Legend";
 import { MapView } from "./components/MapView";
 import { SampleInspector } from "./components/SampleInspector";
 import { useAppState } from "./state/useAppState";
+import type { SampleRecord } from "./data/schema";
 
 const MAP_RENDER_THROTTLE_MS = 350;
+const EMPTY_SAMPLE_LIST: SampleRecord[] = [];
+const EMPTY_ID_LIST: string[] = [];
 
 function useThrottledMapValue<T>(value: T, delayMs: number) {
   const [throttledValue, setThrottledValue] = useState(value);
@@ -75,6 +78,24 @@ export default function App() {
     (sample: { sample_id: string }) => setSelectedSampleId(sample.sample_id),
     [setSelectedSampleId]
   );
+  const selectMaterializedSample = useCallback(
+    (sample: { sample_id: string }) =>
+      state.setExplorationSettings((current) => ({
+        ...current,
+        selectedMaterializedSampleId: sample.sample_id
+      })),
+    [state.setExplorationSettings]
+  );
+  const explorationActive = Boolean(state.filters.selectedOnly && state.selectedSample);
+  const materializedSamples = explorationActive
+    ? state.materializedNeighborSamples
+    : EMPTY_SAMPLE_LIST;
+  const sameGroupMaterializedSamples = explorationActive
+    ? state.sameGroupMaterializedSamples
+    : EMPTY_SAMPLE_LIST;
+  const materializedPredictedIds = explorationActive
+    ? state.explorationSettings.predictedNeighborIds
+    : EMPTY_ID_LIST;
   const legend = (
     <Legend
       samples={state.filteredSamples}
@@ -92,10 +113,23 @@ export default function App() {
         <MapView
           samples={mapSamples}
           selectedSample={state.selectedSample}
+          materializedSamples={materializedSamples}
+          sameGroupMaterializedSamples={sameGroupMaterializedSamples}
+          materializedPredictedIds={materializedPredictedIds}
+          sameGroupPredicted={
+            explorationActive && state.explorationSettings.sameGroupPredicted
+          }
+          sameGroupNeighbors={
+            explorationActive && state.explorationSettings.sameGroupNeighbors
+          }
+          selectedMaterializedSample={
+            explorationActive ? state.selectedMaterializedSample : undefined
+          }
           layerSettings={mapLayerSettings}
           viewState={state.viewState}
           setViewState={state.setViewState}
           onSelectSample={selectSample}
+          onSelectMaterializedSample={selectMaterializedSample}
         />
         <button className="png-button" onClick={exportMapPng} title="Export map PNG">
           <Camera size={16} />
@@ -119,6 +153,7 @@ export default function App() {
         {legendPlacement === "right-top" && legend}
         <SampleInspector
           sample={state.selectedSample}
+          allSamples={state.samples}
           selectedOnly={state.filters.selectedOnly}
           clearSelection={() => state.setSelectedSampleId(undefined)}
           setViewState={state.setViewState}

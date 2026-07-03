@@ -66,6 +66,15 @@ export type UiSettings = {
   legendMapCorner: LegendMapCorner;
 };
 
+export type ExplorationSettings = {
+  materializedNeighborIds: string[];
+  predictedNeighborIds: string[];
+  sameGroupMaterialized: boolean;
+  sameGroupPredicted: boolean;
+  sameGroupNeighbors: boolean;
+  selectedMaterializedSampleId?: string;
+};
+
 export const defaultLayerSettings: LayerSettings = {
   trueLocations: true,
   predictedLocations: true,
@@ -106,6 +115,15 @@ export const defaultUiSettings: UiSettings = {
   legendMapCorner: "bottom-left"
 };
 
+export const defaultExplorationSettings: ExplorationSettings = {
+  materializedNeighborIds: [],
+  predictedNeighborIds: [],
+  sameGroupMaterialized: false,
+  sameGroupPredicted: false,
+  sameGroupNeighbors: false,
+  selectedMaterializedSampleId: undefined
+};
+
 function downloadText(filename: string, text: string, type = "text/plain") {
   const blob = new Blob([text], { type });
   downloadBlob(filename, blob);
@@ -130,6 +148,8 @@ export function useAppState() {
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [layerSettings, setLayerSettings] = useState<LayerSettings>(defaultLayerSettings);
   const [uiSettings, setUiSettings] = useState<UiSettings>(defaultUiSettings);
+  const [explorationSettings, setExplorationSettings] =
+    useState<ExplorationSettings>(defaultExplorationSettings);
   const [viewState, setViewState] = useState<MapViewState>(defaultViewState);
   const [selectedSampleId, setSelectedSampleId] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
@@ -227,7 +247,34 @@ export function useAppState() {
   const primaryWindowCount = filteredSamples.filter((sample) => sample.inPrimaryWindow).length;
   const comparisonWindowCount = filteredSamples.filter((sample) => sample.inComparisonWindow).length;
   const selectedSample = samples.find((sample) => sample.sample_id === selectedSampleId);
+  const sampleById = useMemo(
+    () => new Map(samples.map((sample) => [sample.sample_id, sample])),
+    [samples]
+  );
+  const materializedNeighborSamples = useMemo(
+    () =>
+      explorationSettings.materializedNeighborIds
+        .map((id) => sampleById.get(id))
+        .filter((sample): sample is SampleRecord => Boolean(sample)),
+    [explorationSettings.materializedNeighborIds, sampleById]
+  );
+  const sameGroupMaterializedSamples = useMemo(() => {
+    if (!explorationSettings.sameGroupMaterialized || !selectedSample) return [];
+    const selectedGroup = selectedSample.original_group ?? selectedSample.group;
+    if (!selectedGroup) return [];
+    return samples.filter((sample) => {
+      if (sample.sample_id === selectedSample.sample_id) return false;
+      return (sample.original_group ?? sample.group) === selectedGroup;
+    });
+  }, [explorationSettings.sameGroupMaterialized, samples, selectedSample]);
+  const selectedMaterializedSample = explorationSettings.selectedMaterializedSampleId
+    ? sampleById.get(explorationSettings.selectedMaterializedSampleId)
+    : undefined;
   const window = visibleWindow(deferredTimeSettings, metadata.ageExtent);
+
+  useEffect(() => {
+    setExplorationSettings(defaultExplorationSettings);
+  }, [selectedSampleId]);
 
   const setCenterAge = useCallback(
     (age: number, options?: { snap?: boolean }) => {
@@ -305,6 +352,11 @@ export function useAppState() {
     layerSettings,
     deferredLayerSettings,
     setLayerSettings,
+    explorationSettings,
+    setExplorationSettings,
+    materializedNeighborSamples,
+    sameGroupMaterializedSamples,
+    selectedMaterializedSample,
     uiSettings,
     setUiSettings,
     viewState,
