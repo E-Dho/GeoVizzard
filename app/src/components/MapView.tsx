@@ -27,21 +27,7 @@ import { sameGroupNeighborContextLayers } from "../layers/sameGroupNeighborConte
 
 type BaseMap = "positron" | "topo" | "blank" | "utm";
 
-const positronNoLabels: StyleSpecification = {
-  version: 8,
-  sources: {
-    carto: {
-      type: "raster",
-      tiles: [
-        "https://a.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png",
-        "https://b.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}.png"
-      ],
-      tileSize: 256,
-      attribution: "&copy; OpenStreetMap contributors &copy; CARTO"
-    }
-  },
-  layers: [{ id: "carto", type: "raster", source: "carto", minzoom: 0, maxzoom: 19 }]
-};
+const positronStyle = "https://tiles.openfreemap.org/styles/positron";
 
 const openTopoMap: StyleSpecification = {
   version: 8,
@@ -76,8 +62,8 @@ const blankMap: StyleSpecification = {
   layers: [{ id: "background", type: "background", paint: { "background-color": "#f8fafc" } }]
 };
 
-const baseMapStyles: Record<BaseMap, StyleSpecification> = {
-  positron: positronNoLabels,
+const baseMapStyles: Record<BaseMap, StyleSpecification | string> = {
+  positron: positronStyle,
   topo: openTopoMap,
   blank: blankMap,
   utm: blankMap
