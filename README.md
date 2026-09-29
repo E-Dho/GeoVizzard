@@ -19,15 +19,21 @@ The frontend uses React, TypeScript, MapLibre GL, and deck.gl. It provides map l
 
 ## Requirements
 
-- Node.js 18 or newer
+- Node.js 22 or newer
 - npm
+
+Using an older Node.js release may produce an `EBADENGINE` warning during
+installation because some MapLibre dependencies require Node.js 22.
 
 ## Install
 
 ```bash
 cd app
-npm install
+npm ci
 ```
+
+Use `npm install` instead if you intentionally need to update the dependency
+lockfile.
 
 ## Run Locally
 
